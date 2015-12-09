@@ -1,0 +1,22 @@
+/* Variables */
+/********************************************************/
+/* search form */
+.form-search {
+  margin-bottom: 30px; }
+  .form-search .form-search-group {
+    margin-bottom: 20px; }
+  .form-search .radio {
+    margin: 0; }
+  .form-search .form-search-col {
+    display: inline-block;
+    vertical-align: middle; }
+    .form-search .form-search-col label {
+      margin-bottom: 0; }
+  .form-search .form-search-col-left {
+    width: 30%;
+    text-align: right;
+    margin-right: 5px; }
+  .form-search .form-search-col-right {
+    width: 65%; }
+
+/********************************************************/

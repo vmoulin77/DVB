@@ -1,0 +1,34 @@
+@import '../../../global';
+
+/* search form */
+.form-search {
+    margin-bottom: 30px;
+
+    .form-search-group {
+        margin-bottom: 20px;
+    }
+
+    .radio {
+        margin: 0;
+    }
+
+    .form-search-col {
+        display: inline-block;
+        vertical-align: middle;
+
+        label {
+            margin-bottom: 0;
+        }
+    }
+
+    .form-search-col-left {
+        width: 30%;
+        text-align: right;
+        margin-right: 5px;
+    }
+
+    .form-search-col-right {
+        width: 65%;
+    }
+}
+/********************************************************/

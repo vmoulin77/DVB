@@ -1,0 +1,1 @@
+<p>The campaign is completed&nbsp;!</p>

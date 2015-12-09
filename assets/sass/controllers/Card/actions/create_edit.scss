@@ -1,0 +1,38 @@
+.table-card {
+    width: 100%;
+    margin-bottom: 20px;
+
+    .word-edit {
+        width: 100%;
+    }
+}
+
+.buttons {
+    text-align: center;
+
+    button {
+        width: 25%;
+        margin: 0 10% 0 10%
+    }
+}
+
+#button_insert_small_r {
+    width: 100%;
+}
+
+.word-status {
+    width: 100%;
+    height: 50px;
+}
+
+.word-status-active {
+    @extend .word-status;
+
+    background-color: green;
+}
+
+.word-status-inactive {
+    @extend .word-status;
+
+    background-color: red;
+}

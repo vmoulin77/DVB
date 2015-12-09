@@ -1,0 +1,164 @@
+@import 'global';
+
+.spacer-2em {
+    height: 2em;
+}
+
+.vertical-center {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+html, body {
+    height: 100%;
+}
+
+html {
+    overflow-y: scroll;
+}
+
+body {
+    background-color: $opaque-blue;
+    color: black;
+    font-family: Verdana;
+    font-size: 14px;
+}
+
+.container {
+    position: relative;
+    min-height: 100%;
+    height: auto;
+    background-color: $light-blue;
+}
+
+header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
+    margin-bottom: 5px;
+    text-align: right;
+}
+
+.success-msg {
+    color: green;
+}
+
+.error-msg {
+    color: red;
+}
+
+#generic_dialog_content {
+    display: none;
+}
+
+/* Loader */
+#loader {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    background: url('../img/loader-animation.gif') 50% 50% no-repeat rgb(249,249,249);
+}
+/********************************************************/
+
+/* Menu */
+#menu {
+    background-color: $opaque-blue;
+    color: black;
+    height: 100%;
+    border-right: solid 2px;
+    border-bottom: solid 2px;
+    border-left: solid 2px;
+    text-align: center;
+    
+    span {
+        display: block;
+        font-size: 18px;
+        font-weight: bold;
+        border-top: solid 2px black;
+        margin: 0;
+        padding: 10px 0;
+        cursor: pointer;
+    }
+    
+    .menu-color-light {
+        background-color: $dark-blue;
+    }
+    
+    .menu-color-dark, .menu-color-light:hover {
+        background-color: $opaque-blue;
+    }
+    
+    .menu-color-dark, .menu-color-light:hover, ul li a {
+        color: white;
+    }
+    
+    ul {
+        display: none;
+        border-top: solid 1px;
+        padding-top: 8px;
+        padding-right: 0;
+        padding-bottom: 0;
+        padding-left: 0;
+        list-style-type: none;
+        margin-top: 0;
+        
+        li {
+            margin-bottom: 2px;
+            
+            a {
+                font-size: 14px;
+                text-decoration: none;
+                
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+        }
+    }
+}
+/********************************************************/
+
+/* table-style-1 */
+.table-style-1 {
+    border-collapse: collapse;
+
+    > thead > tr > th, > tbody > tr > td {
+        border: 1px solid black;
+        padding: 5px;
+    }
+
+    > thead {
+        th {
+            text-align: center;
+        }
+    }
+}
+/********************************************************/
+
+/* table-style-2 */
+.table-style-2 {
+    @extend .table-style-1;
+
+    > thead {
+        background-color: $dark-blue;
+    }
+
+    > tbody {
+        > tr:nth-child(odd) {
+            background-color: $pale-blue;
+        }
+
+        > tr:nth-child(even) {
+            background-color: $blue;
+        }
+    }
+}
+/********************************************************/
