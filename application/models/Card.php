@@ -404,7 +404,7 @@ class Card extends CI_Model
             }
 
             foreach ($ids_decks as $id_deck) {
-                if ( ! Card_move::set_last_move($id, $id_deck, true)) {
+                if ( ! Card_move::set_last_move($id, $id_deck, true, false)) {
                     $CI->db->trans_rollback();
                     return new utils\errors\DVB_Error();
                 }
@@ -415,7 +415,7 @@ class Card extends CI_Model
             $decks = Deck::get_all_with_contains_current_card($id);
             foreach ($decks as $deck) {
                 if ($deck->contains_current_card) {
-                    if ( ! Card_move::set_last_move($id, $deck->get_id(), false)) {
+                    if ( ! Card_move::set_last_move($id, $deck->get_id(), false, false)) {
                         $CI->db->trans_rollback();
                         return new utils\errors\DVB_Error();
                     }

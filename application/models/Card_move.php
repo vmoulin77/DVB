@@ -55,15 +55,18 @@ class Card_move extends CI_Model
 
     /********************************************************/
 
-    // Warning: this function must be performed inside an SQL transaction
-    public static function set_last_move($id_card, $id_deck, $is_last) {
+    public static function set_last_move($id_card, $id_deck, $is_last, $in_transaction = true) {
         $CI = get_instance();
+
+        if ($in_transaction) {
+            $CI->db->trans_start();
+        }
 
         $CI->db->from('card_deck_version')
                ->where('id_card', $id_card)
                ->where('id_deck', $id_deck);
         if ($CI->db->count_all_results() == 0) {
-            return true;
+            $retour = true;
         } else {
             $CI->db->select('MAX(id_version) AS max_id_version')
                    ->from('card_deck_version')
@@ -77,11 +80,17 @@ class Card_move extends CI_Model
                    ->where('id_deck', $id_deck)
                    ->where('id_version', $max_id_version);
             if ($CI->db->update('card_deck_version')) {
-                return true;
+                $retour = true;
             } else {
-                return false;
+                $retour = false;
             }
         }
+
+        if ($in_transaction) {
+            $CI->db->trans_complete();
+        }
+
+        return $retour;
     }
 
     public static function move($type, $id_card, $id_deck) {
@@ -129,7 +138,7 @@ class Card_move extends CI_Model
             || ($row->id_version < $current_version->get_id())
         ) {
             if ($query->num_rows() != 0) {
-                if ( ! self::set_last_move($id_card, $id_deck, false)) {
+                if ( ! self::set_last_move($id_card, $id_deck, false, false)) {
                     $CI->db->trans_rollback();
                     return new utils\errors\DVB_Error();
                 }
@@ -159,7 +168,7 @@ class Card_move extends CI_Model
                 return new utils\errors\DVB_Error();
             }
 
-            if (self::set_last_move($id_card, $id_deck, true)) {
+            if (self::set_last_move($id_card, $id_deck, true, false)) {
                 $CI->db->trans_commit();
                 return true;
             } else {
