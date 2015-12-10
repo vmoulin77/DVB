@@ -189,10 +189,10 @@ class Card extends CI_Model
 
         $CI->load->model('Version');
 
-        $CI->db->trans_begin();
+        $CI->transaction->begin();
 
         if ( ! self::num_is_free($num)) {
-            $CI->db->trans_rollback();
+            $CI->transaction->rollback();
             return new utils\errors\DVB_Error('INSERT_ERROR', 'The card number is not free.');
         }
 
@@ -204,7 +204,7 @@ class Card extends CI_Model
         if ($CI->db->insert('card', $data)) {
             $id = $CI->db->insert_id();
         } else {
-            $CI->db->trans_rollback();
+            $CI->transaction->rollback();
             return new utils\errors\DVB_Error();
         }
 
@@ -218,10 +218,10 @@ class Card extends CI_Model
             'id_card'            => $id,
         );
         if ($CI->db->insert('card_content', $data)) {
-            $CI->db->trans_commit();
+            $CI->transaction->commit();
             return true;
         } else {
-            $CI->db->trans_rollback();
+            $CI->transaction->rollback();
             return new utils\errors\DVB_Error();
         }
     }
@@ -244,10 +244,10 @@ class Card extends CI_Model
 
         $CI->load->model('Version');
 
-        $CI->db->trans_begin();
+        $CI->transaction->begin();
 
         if (self::card_is_deleted($id)) {
-            $CI->db->trans_rollback();
+            $CI->transaction->rollback();
             return new utils\errors\DVB_Error('UPDATE_ERROR', 'The card has been deleted.');
         }
 
@@ -256,17 +256,17 @@ class Card extends CI_Model
             $CI->load->model('Review_record');
 
             if (Campaign::campaign_is_deleted($id_campaign)) {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error('UPDATE_ERROR', 'The campaign has been deleted.');
             }
 
             if (Review_record::review_record_is_deleted($id_campaign, $id)) {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error('UPDATE_ERROR', "The review record doesn't exist anymore.");
             }
 
             if (Review_record::review_record_is_done($id_campaign, $id)) {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error('UPDATE_ERROR', 'The card has already been reviewed.');
             }
 
@@ -274,7 +274,7 @@ class Card extends CI_Model
                    ->where('id_campaign', $id_campaign)
                    ->where('id_card', $id);
             if ( ! $CI->db->update('campaign_card')) {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error();
             }
         }
@@ -288,11 +288,11 @@ class Card extends CI_Model
                 $CI->db->set('num', $data['num'])
                        ->where('id', $id);
                 if ( ! $CI->db->update('card')) {
-                    $CI->db->trans_rollback();
+                    $CI->transaction->rollback();
                     return new utils\errors\DVB_Error();
                 }
             } else {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error('UPDATE_ERROR', 'The card number is not free.');
             }
         }
@@ -311,17 +311,17 @@ class Card extends CI_Model
             $CI->db->set($data_card_content)
                    ->where('id', $card->get_card_content()->get_id());
             if ($CI->db->update('card_content')) {
-                $CI->db->trans_commit();
+                $CI->transaction->commit();
                 return true;
             } else {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error();
             }
         } else {
             $CI->db->set(array('is_last' => false))
                    ->where('id', $card->get_card_content()->get_id());
             if ( ! $CI->db->update('card_content')) {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error();
             }
 
@@ -330,10 +330,10 @@ class Card extends CI_Model
             $data_card_content['id_card']     = $id;
 
             if ($CI->db->insert('card_content', $data_card_content)) {
-                $CI->db->trans_commit();
+                $CI->transaction->commit();
                 return true;
             } else {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error();
             }
         }
@@ -364,20 +364,20 @@ class Card extends CI_Model
         $CI->load->model('Version');
         $CI->load->model('Deck');
 
-        $CI->db->trans_begin();
+        $CI->transaction->begin();
 
         if (self::card_is_deleted($id)) {
-            $CI->db->trans_rollback();
+            $CI->transaction->rollback();
             return new utils\errors\DVB_Error('DELETE_ERROR', 'The card has already been deleted.');
         }
 
         if (self::never_versioned($id)) {
             $CI->db->where('id', $id);
             if ($CI->db->delete('card')) {
-                $CI->db->trans_commit();
+                $CI->transaction->commit();
                 return true;
             } else {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error();
             }
         } else {
@@ -399,13 +399,13 @@ class Card extends CI_Model
                    ->where('id_version', $current_version->get_id())
                    ->where('type', 'add');
             if ( ! $CI->db->delete('card_deck_version')) {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error();
             }
 
             foreach ($ids_decks as $id_deck) {
-                if ( ! Card_move::set_last_move($id, $id_deck, true, false)) {
-                    $CI->db->trans_rollback();
+                if ( ! Card_move::set_last_move($id, $id_deck, true)) {
+                    $CI->transaction->rollback();
                     return new utils\errors\DVB_Error();
                 }
             }
@@ -415,8 +415,8 @@ class Card extends CI_Model
             $decks = Deck::get_all_with_contains_current_card($id);
             foreach ($decks as $deck) {
                 if ($deck->contains_current_card) {
-                    if ( ! Card_move::set_last_move($id, $deck->get_id(), false, false)) {
-                        $CI->db->trans_rollback();
+                    if ( ! Card_move::set_last_move($id, $deck->get_id(), false)) {
+                        $CI->transaction->rollback();
                         return new utils\errors\DVB_Error();
                     }
 
@@ -428,7 +428,7 @@ class Card extends CI_Model
                         'is_last'     => true,
                     );
                     if ( ! $CI->db->insert('card_deck_version', $data)) {
-                        $CI->db->trans_rollback();
+                        $CI->transaction->rollback();
                         return new utils\errors\DVB_Error();
                     }
                 }
@@ -438,7 +438,7 @@ class Card extends CI_Model
             $CI->db->where('id_card', $id)
                    ->where('id_version', $current_version->get_id());
             if ( ! $CI->db->delete('card_content')) {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error();
             }
 
@@ -450,7 +450,7 @@ class Card extends CI_Model
             $query = $CI->db->get();
 
             if ($query->num_rows() == 0) {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error();
             } else {
                 $row = $query->row();
@@ -458,7 +458,7 @@ class Card extends CI_Model
                 $CI->db->set(array('is_last' => true))
                        ->where('id', $row->id);
                 if ( ! $CI->db->update('card_content')) {
-                    $CI->db->trans_rollback();
+                    $CI->transaction->rollback();
                     return new utils\errors\DVB_Error();
                 }
             }
@@ -471,10 +471,10 @@ class Card extends CI_Model
                    ->where('id', $id);
 
             if ($CI->db->update('card')) {
-                $CI->db->trans_commit();
+                $CI->transaction->commit();
                 return true;
             } else {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error();
             }
         }

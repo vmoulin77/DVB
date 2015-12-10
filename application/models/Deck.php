@@ -140,10 +140,10 @@ class Deck extends CI_Model
 
         $CI->load->model('Version');
 
-        $CI->db->trans_begin();
+        $CI->transaction->begin();
 
         if ( ! self::num_is_free($num)) {
-            $CI->db->trans_rollback();
+            $CI->transaction->rollback();
             return new utils\errors\DVB_Error('INSERT_ERROR', "The deck number is not free.");
         }
 
@@ -156,10 +156,10 @@ class Deck extends CI_Model
         );
 
         if ($CI->db->insert('deck', $data)) {
-            $CI->db->trans_commit();
+            $CI->transaction->commit();
             return true;
         } else {
-            $CI->db->trans_rollback();
+            $CI->transaction->rollback();
             return new utils\errors\DVB_Error();
         }
     }
@@ -179,10 +179,10 @@ class Deck extends CI_Model
     public static function update($id, $data) {
         $CI = get_instance();
 
-        $CI->db->trans_begin();
+        $CI->transaction->begin();
 
         if (self::deck_is_deleted($id)) {
-            $CI->db->trans_rollback();
+            $CI->transaction->rollback();
             return new utils\errors\DVB_Error('UPDATE_ERROR', "The deck doesn't exist anymore.");
         }
 
@@ -192,7 +192,7 @@ class Deck extends CI_Model
             && ($data['num'] != $deck->num)
         ) {
             if ( ! self::num_is_free($data['num'])) {
-                $CI->db->trans_rollback();
+                $CI->transaction->rollback();
                 return new utils\errors\DVB_Error('UPDATE_ERROR', 'The deck number is not free.');
             }
         }
@@ -201,10 +201,10 @@ class Deck extends CI_Model
                ->where('id', $id);
 
         if ($CI->db->update('deck')) {
-            $CI->db->trans_commit();
+            $CI->transaction->commit();
             return true;
         } else {
-            $CI->db->trans_rollback();
+            $CI->transaction->rollback();
             return new utils\errors\DVB_Error();
         }
     }
