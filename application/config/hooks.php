@@ -11,3 +11,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 |	http://codeigniter.com/user_guide/general/hooks.html
 |
 */
+
+$hook['post_controller_constructor'] = array(
+    'class'    => 'Global_transaction',
+    'function' => 'open',
+    'filename' => 'Global_transaction.php',
+    'filepath' => 'hooks',
+);
+
+$hook['post_controller'] = array(
+    'class'    => 'Global_transaction',
+    'function' => 'close',
+    'filename' => 'Global_transaction.php',
+    'filepath' => 'hooks',
+);

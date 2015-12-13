@@ -62,15 +62,13 @@ class Campaign extends CI_Model
 
         $CI->load->model('Deck');
 
-        $CI->transaction->begin();
-
         if (Deck::deck_is_deleted($id_deck)) {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error('INSERT_ERROR', "The deck has been deleted.");
         }
 
         if (Deck::deck_is_empty($id_deck)) {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error('INSERT_ERROR', "The deck is empty.");
         }
 
@@ -82,7 +80,7 @@ class Campaign extends CI_Model
         );
 
         if ( ! $CI->db->insert('campaign', $data)) {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error();
         }
 
@@ -105,10 +103,9 @@ class Campaign extends CI_Model
             );
         }
         if ($CI->db->insert_batch('campaign_card', $data)) {
-            $CI->transaction->commit();
             return true;
         } else {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error();
         }
     }
@@ -128,10 +125,8 @@ class Campaign extends CI_Model
     public static function update($id, $data) {
         $CI = get_instance();
 
-        $CI->transaction->begin();
-
         if (self::campaign_is_deleted($id)) {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error('UPDATE_ERROR', "The campaign doesn't exist anymore.");
         }
 
@@ -139,10 +134,9 @@ class Campaign extends CI_Model
                ->where('id', $id);
 
         if ($CI->db->update('campaign')) {
-            $CI->transaction->commit();
             return true;
         } else {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error();
         }
     }

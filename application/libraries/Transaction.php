@@ -23,6 +23,10 @@ class Transaction
         $this->depth += 1;
     }
 
+    public function set_as_rollback() {
+        $this->is_rollback = true;
+    }
+
     public function rollback() {
         $this->is_rollback = true;
         $this->depth -= 1;

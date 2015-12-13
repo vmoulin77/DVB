@@ -58,8 +58,6 @@ class Card_move extends CI_Model
     public static function set_last_move($id_card, $id_deck, $is_last) {
         $CI = get_instance();
 
-        $CI->transaction->begin();
-
         $CI->db->from('card_deck_version')
                ->where('id_card', $id_card)
                ->where('id_deck', $id_deck);
@@ -84,8 +82,6 @@ class Card_move extends CI_Model
             }
         }
 
-        $CI->transaction->commit();
-
         return $retour;
     }
 
@@ -95,10 +91,8 @@ class Card_move extends CI_Model
         $CI->load->model('Card');
         $CI->load->model('Version');
 
-        $CI->transaction->begin();
-
         if (Card::card_is_deleted($id_card)) {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error('MOVE_ERROR', 'The card has been deleted.');
         }
 
@@ -116,7 +110,7 @@ class Card_move extends CI_Model
         if (($type == 'remove')
             && (($query->num_rows() == 0) || ($row->type == 'remove'))
         ) {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error('MOVE_ERROR', 'The card is not in the deck.');
         }
 
@@ -124,7 +118,7 @@ class Card_move extends CI_Model
             && ($query->num_rows() != 0)
             && ($row->type == 'add')
         ) {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error('MOVE_ERROR', 'The card is already in the deck.');
         }
 
@@ -135,7 +129,7 @@ class Card_move extends CI_Model
         ) {
             if ($query->num_rows() != 0) {
                 if ( ! self::set_last_move($id_card, $id_deck, false)) {
-                    $CI->transaction->rollback();
+                    $CI->transaction->set_as_rollback();
                     return new utils\errors\DVB_Error();
                 }
             }
@@ -149,10 +143,9 @@ class Card_move extends CI_Model
             );
 
             if ($CI->db->insert('card_deck_version', $data)) {
-                $CI->transaction->commit();
                 return true;
             } else {
-                $CI->transaction->rollback();
+                $CI->transaction->set_as_rollback();
                 return new utils\errors\DVB_Error();
             }
         } else {
@@ -160,15 +153,14 @@ class Card_move extends CI_Model
                    ->where('id_deck', $id_deck)
                    ->where('id_version', $current_version->get_id());
             if ( ! $CI->db->delete('card_deck_version')) {
-                $CI->transaction->rollback();
+                $CI->transaction->set_as_rollback();
                 return new utils\errors\DVB_Error();
             }
 
             if (self::set_last_move($id_card, $id_deck, true)) {
-                $CI->transaction->commit();
                 return true;
             } else {
-                $CI->transaction->rollback();
+                $CI->transaction->set_as_rollback();
                 return new utils\errors\DVB_Error();
             }
         }

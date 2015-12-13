@@ -156,8 +156,6 @@ class Version extends CI_Model
 
         $now = new DateTime();
 
-        $CI->transaction->begin();
-
         $current_version = self::get_current_version();
 
         $data = array(
@@ -170,15 +168,14 @@ class Version extends CI_Model
         $CI->db->set($data);
         $CI->db->where('id', $current_version->id);
         if ( ! $CI->db->update('version')) {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return false;
         }
 
         if ($CI->db->insert('version', array('id' => null))) {
-            $CI->transaction->commit();
             return true;
         } else {
-            $CI->transaction->rollback();
+            $CI->transaction->set_as_rollback();
             return false;
         }
     }
