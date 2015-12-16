@@ -179,4 +179,14 @@ class Version extends CI_Model
             return false;
         }
     }
+
+    public function compare($version_before) {
+        $retour = array();
+
+        if ($this->get_id() <= $version_before->get_id()) {
+            return $retour;
+        }
+
+        // TO DO
+    }
 }

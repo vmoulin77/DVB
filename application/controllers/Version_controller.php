@@ -37,4 +37,32 @@ class Version_controller extends CI_Controller
             }
         }
     }
+
+    public function compare() {
+        //$this->output->enable_profiler(true);
+        
+        $this->load->model('Version');
+
+        $this->form_validation->set_rules('version_from', 'Version', 'required');
+        $this->form_validation->set_rules('version_to', 'Version', 'required');
+
+        $data = array();
+
+        if ($this->form_validation->run() === true) {
+            $version_from  = Version::get_by_id($this->input->post('version_from'));
+            $version_to    = Version::get_by_id($this->input->post('version_to'));
+
+            if (($version_from === true)
+                && ($version_to === true)
+            ) {
+                $comparison = $version_to->compare($version_from);
+
+                $data['comparison'] = $comparison;
+            }
+        }
+
+        $this->layout->add_basic_assets()
+                     ->menu()
+                     ->action_view($data);
+    }
 }

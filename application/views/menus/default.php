@@ -21,6 +21,7 @@
     <ul>
         <li><a href="<?php echo base_url() . 'Version/'; ?>">Index</a></li>
         <li><a href="<?php echo base_url() . 'Version/freeze'; ?>">Freeze</a></li>
+        <li><a href="<?php echo base_url() . 'Version/compare'; ?>">Compare</a></li>
     </ul>
     <span class="menu-section-hidden menu-color-light">Export</span>
     <ul>

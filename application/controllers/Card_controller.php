@@ -81,8 +81,8 @@ class Card_controller extends CI_Controller
             $data = array(
                 'id'                 => $id,
                 'num'                => $card->get_num(),
-                'word_english'       => $card->get_card_content()->get_word_english(),
-                'word_french'        => $card->get_card_content()->get_word_french(),
+                'word_english'       => str_replace('<br />', "\n", $card->get_card_content()->get_word_english()),
+                'word_french'        => str_replace('<br />', "\n", $card->get_card_content()->get_word_french()),
                 'is_active_english'  => $card->get_card_content()->get_is_active_english(),
                 'is_active_french'   => $card->get_card_content()->get_is_active_french(),
                 'id_campaign'        => $id_campaign,
