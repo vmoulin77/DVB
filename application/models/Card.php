@@ -477,12 +477,14 @@ class Card extends CI_Model
         }
     }
 
-    public static function get_by_id($id, $return_format = 'standard') {
+    public static function get_by_id($id) {
         $CI = get_instance();
 
         $CI->load->model('Card_content');
 
-        $CI->db->select('id, num, is_deleted');
+        $id = (int) $id;
+
+        $CI->db->select('num, is_deleted');
         $CI->db->from('card');
         $CI->db->where('id', $id);
 
@@ -491,19 +493,12 @@ class Card extends CI_Model
         if ($query_card->num_rows() == 1) {
             $row_card = $query_card->row();
 
-            if ($return_format == 'standard') {
-                $card_id          = (int) $row_card->id;
-                $card_num         = (int) $row_card->num;
-                $card_is_deleted  = (bool) $row_card->is_deleted;
-            } elseif ($return_format == 'string') {
-                $card_id          = $row_card->id;
-                $card_num         = $row_card->num;
-                $card_is_deleted  = $row_card->is_deleted;
-            }
+            $card_num         = (int) $row_card->num;
+            $card_is_deleted  = (bool) $row_card->is_deleted;
 
             $CI->db->select('id')
                    ->from('card_content')
-                   ->where('id_card', $card_id)
+                   ->where('id_card', $id)
                    ->where('is_last', true);
             $query_card_content = $CI->db->get();
 
@@ -512,13 +507,13 @@ class Card extends CI_Model
             }
             $row_card_content = $query_card_content->row();
 
-            $card_content = Card_content::get_by_id($row_card_content->id, $return_format);
+            $card_content = Card_content::get_by_id($row_card_content->id);
             if ($card_content === false) {
                 return false;
             }
             
             return self::make(
-                $card_id,
+                $id,
                 $card_num,
                 $card_content,
                 $card_is_deleted

@@ -218,10 +218,12 @@ class Deck extends CI_Model
         }
     }
 
-    public static function get_by_id($id, $return_format = 'standard') {
+    public static function get_by_id($id) {
         $CI = get_instance();
 
-        $CI->db->select('id, num, name')
+        $id = (int) $id;
+
+        $CI->db->select('num, name')
                ->from('deck')
                ->where('id', $id);
 
@@ -230,16 +232,10 @@ class Deck extends CI_Model
         if ($query->num_rows() == 1) {
             $row = $query->row();
 
-            if ($return_format == 'standard') {
-                $deck_id = (int) $row->id;
-                $deck_num = (int) $row->num;
-            } elseif ($return_format == 'string') {
-                $deck_id = $row->id;
-                $deck_num = $row->num;
-            }
+            $deck_num = (int) $row->num;
             
             return self::make(
-                $deck_id,
+                $id,
                 $deck_num,
                 $row->name
             );

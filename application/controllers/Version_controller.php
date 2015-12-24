@@ -39,7 +39,7 @@ class Version_controller extends CI_Controller
     }
 
     public function compare() {
-        //$this->output->enable_profiler(true);
+        $this->output->enable_profiler(true);
         
         $this->load->model('Version');
 
@@ -52,10 +52,14 @@ class Version_controller extends CI_Controller
             $version_from  = Version::get_by_id($this->input->post('version_from'));
             $version_to    = Version::get_by_id($this->input->post('version_to'));
 
-            if (($version_from === true)
-                && ($version_to === true)
+            if (($version_from !== false)
+                && ($version_to !== false)
             ) {
                 $comparison = $version_to->compare($version_from);
+
+echo '<pre>';
+print_r($comparison);
+echo '</pre>';
 
                 $data['comparison'] = $comparison;
             }

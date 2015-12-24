@@ -117,10 +117,12 @@ class Card_content extends CI_Model
         }
     }
 
-    public static function get_by_id($id, $return_format = 'standard') {
+    public static function get_by_id($id) {
         $CI = get_instance();
 
-        $CI->db->select('id, word_english, word_french, is_active_english, is_active_french, is_last')
+        $id = (int) $id;
+
+        $CI->db->select('word_english, word_french, is_active_english, is_active_french, is_last')
                ->from('card_content')
                ->where('id', $id);
         $query = $CI->db->get();
@@ -128,20 +130,12 @@ class Card_content extends CI_Model
         if ($query->num_rows() == 1) {
             $row = $query->row();
             
-            if ($return_format == 'standard') {
-                $card_content_id                 = (int) $row->id;
-                $card_content_is_active_english  = (bool) $row->is_active_english;
-                $card_content_is_active_french   = (bool) $row->is_active_french;
-                $card_content_is_last            = (bool) $row->is_last;
-            } elseif ($return_format == 'string') {
-                $card_content_id                 = $row->id;
-                $card_content_is_active_english  = $row->is_active_english;
-                $card_content_is_active_french   = $row->is_active_french;
-                $card_content_is_last            = $row->is_last;
-            }
+            $card_content_is_active_english  = (bool) $row->is_active_english;
+            $card_content_is_active_french   = (bool) $row->is_active_french;
+            $card_content_is_last            = (bool) $row->is_last;
 
             return self::make(
-                $card_content_id,
+                $id,
                 $row->word_english,
                 $row->word_french,
                 $card_content_is_active_english,

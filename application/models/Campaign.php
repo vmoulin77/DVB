@@ -156,10 +156,12 @@ class Campaign extends CI_Model
         }
     }
 
-    public static function get_by_id($id, $return_format = 'standard') {
+    public static function get_by_id($id) {
         $CI = get_instance();
 
-        $CI->db->select('id, name, created_at')
+        $id = (int) $id;
+
+        $CI->db->select('name, created_at')
                ->from('campaign')
                ->where('id', $id);
 
@@ -168,16 +170,10 @@ class Campaign extends CI_Model
         if ($query->num_rows() == 1) {
             $row = $query->row();
             
-            if ($return_format == 'standard') {
-                $campaign_id          = (int) $row->id;
-                $campaign_created_at  = new DateTime($row->created_at);
-            } elseif ($return_format == 'string') {
-                $campaign_id          = $row->id;
-                $campaign_created_at  = $row->created_at;
-            }
+            $campaign_created_at = new DateTime($row->created_at);
 
             return self::make(
-                $campaign_id,
+                $id,
                 $row->name,
                 $campaign_created_at
             );

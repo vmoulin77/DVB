@@ -113,10 +113,12 @@ class Version extends CI_Model
         );
     }
 
-    public static function get_by_id($id, $return_format = 'standard') {
+    public static function get_by_id($id) {
         $CI = get_instance();
 
-        $CI->db->select('id, database_version, app_version_code, app_version_name, created_at')
+        $id = (int) $id;
+
+        $CI->db->select('database_version, app_version_code, app_version_name, created_at')
                ->from('version')
                ->where('id', $id);
 
@@ -125,22 +127,13 @@ class Version extends CI_Model
         if ($query->num_rows() == 1) {
             $row = $query->row();
             
-            if ($return_format == 'standard') {
-                $version_id                = (int) $row->id;
-                $version_database_version  = (empty($row->database_version))  ? null : (int) $row->database_version;
-                $version_app_version_code  = (empty($row->app_version_code))  ? null : (int) $row->app_version_code;
-                $version_app_version_name  = (empty($row->app_version_name))  ? null : $row->app_version_name;
-                $version_created_at        = (empty($row->created_at))        ? null : new DateTime($row->created_at);
-            } elseif ($return_format == 'string') {
-                $version_id                = $row->id;
-                $version_database_version  = (empty($row->database_version))  ? null : $row->database_version;
-                $version_app_version_code  = (empty($row->app_version_code))  ? null : $row->app_version_code;
-                $version_app_version_name  = (empty($row->app_version_name))  ? null : $row->app_version_name;
-                $version_created_at        = (empty($row->created_at))        ? null : $row->created_at;
-            }
+            $version_database_version  = (empty($row->database_version))  ? null : (int) $row->database_version;
+            $version_app_version_code  = (empty($row->app_version_code))  ? null : (int) $row->app_version_code;
+            $version_app_version_name  = (empty($row->app_version_name))  ? null : $row->app_version_name;
+            $version_created_at        = (empty($row->created_at))        ? null : new DateTime($row->created_at);
 
             return self::make(
-                $version_id,
+                $id,
                 $version_database_version,
                 $version_app_version_code,
                 $version_app_version_name,
@@ -180,13 +173,61 @@ class Version extends CI_Model
         }
     }
 
-    public function compare($version_before) {
-        $retour = array();
+    public function compare(Version $version_before) {
+        $this->load->model('Card_content');
 
         if ($this->get_id() <= $version_before->get_id()) {
-            return $retour;
+            return array();
         }
 
-        // TO DO
+        $this->db->select('id, id_card, word_english, word_french, is_active_english, is_active_french, id_version, is_last')
+                 ->from('card_content')
+                 ->where('id_version <= ', $this->id)
+                 ->order_by('id_card ASC, id_version ASC');
+
+        $query = $this->db->get();
+
+        $card_contents = array();
+
+        foreach ($query->result() as $row) {
+            $id_card = (int) $row->id_card;
+            $id_version = (int) $row->id_version;
+
+            if ($id_version <= $version_before->id) {
+                $card_contents[$id_card] = array();
+            }
+
+            $id                 = (int) $row->id;
+            $word_english       = $row->word_english;
+            $word_french        = $row->word_french;
+            $is_active_english  = (bool) $row->is_active_english;
+            $is_active_french   = (bool) $row->is_active_french;
+            $is_last            = (bool) $row->is_last;
+
+            $card_content = Card_content::make(
+                $id,
+                $word_english,
+                $word_french,
+                $is_active_english,
+                $is_active_french,
+                $is_last
+            );
+
+            $card_content->id_version = $id_version;
+
+            $card_contents[$id_card][] = $card_content;
+        }
+
+        $retour = array();
+
+        foreach ($card_contents as $value) {
+            if ((count($value) > 1)
+                || ($value[0]->id_version > $version_before->id)
+            ) {
+                $retour[] = $value;
+            }
+        }
+
+        return $retour;
     }
 }

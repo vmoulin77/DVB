@@ -77,7 +77,7 @@ class Card_controller extends CI_Controller
                      ->menu();
 
         if ($this->form_validation->run() === false) {
-            $card = Card::get_by_id($id, 'string');
+            $card = Card::get_by_id($id);
             $data = array(
                 'id'                 => $id,
                 'num'                => $card->get_num(),
