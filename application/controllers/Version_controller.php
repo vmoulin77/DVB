@@ -39,28 +39,28 @@ class Version_controller extends CI_Controller
     }
 
     public function compare() {
-        $this->output->enable_profiler(true);
+        //$this->output->enable_profiler(true);
         
         $this->load->model('Version');
 
-        $this->form_validation->set_rules('version_from', 'Version', 'required');
-        $this->form_validation->set_rules('version_to', 'Version', 'required');
+        $this->form_validation->set_rules('version_before', 'Version', 'required|integer');
+        $this->form_validation->set_rules('version_after', 'Version', 'required|integer');
 
         $data = array();
 
         if ($this->form_validation->run() === true) {
-            $version_from  = Version::get_by_id($this->input->post('version_from'));
-            $version_to    = Version::get_by_id($this->input->post('version_to'));
+            $version_before  = Version::find($this->input->post('version_before'));
+            $version_after   = Version::find($this->input->post('version_after'));
 
-            if (($version_from !== false)
-                && ($version_to !== false)
+            if (($version_before !== false)
+                && ($version_after !== false)
             ) {
-                $comparison = $version_to->compare($version_from);
-
+                $comparison = $version_after->compare_to($version_before);
+/*
 echo '<pre>';
 print_r($comparison);
 echo '</pre>';
-
+*/
                 $data['comparison'] = $comparison;
             }
         }

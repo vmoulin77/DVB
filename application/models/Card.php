@@ -24,6 +24,9 @@ class Card extends CI_Model
         return $retour;
     }
 
+    /********************************************************/
+    /*                 The getters/setters                  */
+    /********************************************************/
     public function get_id() {
         return $this->id;
     }
@@ -80,14 +83,114 @@ class Card extends CI_Model
     public function set_review_records($review_records) {
         $this->review_records = $review_records;
     }
-
     /********************************************************/
 
+    /********************************************************/
+    /*                    The finders                       */
+    /********************************************************/
+    public static function find($id) {
+        $CI = get_instance();
+
+        $CI->load->model('Card_content');
+
+        $id = (int) $id;
+
+        $CI->db->select('num, is_deleted');
+        $CI->db->from('card');
+        $CI->db->where('id', $id);
+
+        $query_card = $CI->db->get();
+
+        if ($query_card->num_rows() == 1) {
+            $row_card = $query_card->row();
+
+            $card_num         = (int) $row_card->num;
+            $card_is_deleted  = (bool) $row_card->is_deleted;
+
+            $CI->db->select('id')
+                   ->from('card_content')
+                   ->where('id_card', $id)
+                   ->where('is_last', true);
+            $query_card_content = $CI->db->get();
+
+            if ($query_card_content->num_rows() == 0) {
+                return false;
+            }
+            $row_card_content = $query_card_content->row();
+
+            $card_content = Card_content::find($row_card_content->id);
+            if ($card_content === false) {
+                return false;
+            }
+            
+            return self::make(
+                $id,
+                $card_num,
+                $card_content,
+                $card_is_deleted
+            );
+        } else {
+            return false;
+        }
+    }
+
+    public static function find_searched_cards($searched_str, $is_case_sensitive, $language, $state) {
+        $CI = get_instance();
+
+        $CI->load->model('Card_content');
+
+        $retour = array();
+
+        $CI->db->select('card.id as card_id, card.num, card.is_deleted, card_content.id as card_content_id, card_content.word_english, card_content.word_french, card_content.is_active_english, card_content.is_active_french');
+        $CI->db->from('card');
+        $CI->db->join('card_content', 'card.id = card_content.id_card');
+        $CI->db->where('card_content.is_last', true);
+
+        if ($state === 'deleted') {
+            $CI->db->where('card.is_deleted', true);
+        } elseif ($state === 'not_deleted') {
+            $CI->db->where('card.is_deleted', false);
+        }
+
+        $query = $CI->db->get();
+
+        $search_in_en = ($language == 'only_en') || ($language == 'both');
+        $search_in_fr = ($language == 'only_fr') || ($language == 'both');
+
+        foreach ($query->result() as $row) {
+            if (($searched_str === '')
+                || ($search_in_en && self::str_match($searched_str, $row->word_english, $is_case_sensitive))
+                || ($search_in_fr && self::str_match($searched_str, $row->word_french, $is_case_sensitive))
+            ) {
+                $card_content = Card_content::make(
+                    (int) $row->card_content_id,
+                    $row->word_english,
+                    $row->word_french,
+                    (bool) $row->is_active_english,
+                    (bool) $row->is_active_french,
+                    true
+                );
+                $retour[] = self::make(
+                    (int) $row->card_id,
+                    (int) $row->num,
+                    $card_content,
+                    (bool) $row->is_deleted
+                );
+            }
+        }
+
+        return $retour;
+    }
+    /********************************************************/
+
+    /********************************************************/
+    /*                    The withers                       */
+    /********************************************************/
     public function with_version_when_deleted() {
         $this->load->model('Version');
 
         if ($this->is_deleted) {
-            $current_version = Version::get_current_version();
+            $current_version = Version::find_current_version();
 
             $this->db->select('version.id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
                      ->from('card')
@@ -147,43 +250,11 @@ class Card extends CI_Model
 
         $this->set_card_contents_history($card_contents_history);
     }
+    /********************************************************/
 
-    public static function get_max_num() {
-        $CI = get_instance();
-
-        $CI->db->select_max('num', 'max_num');
-        $query = $CI->db->get('card');
-        $row = $query->row();
-
-        $retour = (int) $row->max_num;
-        return $retour;
-    }
-
-    private static function convert_word($word) {
-        $retour = $word;
-        $retour = str_replace("\r\n", "\n", $retour);
-        $retour = str_replace(
-            array("\r", "\n"),
-            "<br />",
-            $retour
-        );
-
-        return $retour;
-    }
-
-    public static function num_is_free($num) {
-        $CI = get_instance();
-
-        $CI->db->from('card')
-               ->where('num', $num)
-               ->where('is_deleted', false);
-        if ($CI->db->count_all_results() == 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
+    /********************************************************/
+    /*                   The modifiers                      */
+    /********************************************************/
     public static function insert($num, $word_english, $word_french, $is_active_english, $is_active_french) {
         $CI = get_instance();
 
@@ -212,7 +283,7 @@ class Card extends CI_Model
             'is_active_english'  => $is_active_english,
             'is_active_french'   => $is_active_french,
             'is_last'            => true,
-            'id_version'         => Version::get_current_version()->get_id(),
+            'id_version'         => Version::find_current_version()->get_id(),
             'id_card'            => $id,
         );
         if ($CI->db->insert('card_content', $data)) {
@@ -220,19 +291,6 @@ class Card extends CI_Model
         } else {
             $CI->transaction->set_as_rollback();
             return new utils\errors\DVB_Error();
-        }
-    }
-
-    public static function card_is_deleted($id) {
-        $CI = get_instance();
-
-        $CI->db->from('card')
-               ->where('id', $id)
-               ->where('is_deleted', false);
-        if ($CI->db->count_all_results() == 0) {
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -274,7 +332,7 @@ class Card extends CI_Model
             }
         }
 
-        $card = self::get_by_id($id);
+        $card = self::find($id);
 
         if (isset($data['num'])
             && ($data['num'] != $card->num)
@@ -293,7 +351,7 @@ class Card extends CI_Model
         }
         
         $card->get_card_content()->with_version();
-        $current_version = Version::get_current_version();
+        $current_version = Version::find_current_version();
 
         $data_card_content = array(
             'word_english'       => self::convert_word($data['word_english']),
@@ -332,24 +390,6 @@ class Card extends CI_Model
         }
     }
 
-    public static function never_versioned($id) {
-        $CI = get_instance();
-
-        $str_query = "SELECT COUNT(*) AS count "
-                   . "FROM card_content "
-                   . "WHERE id_card = " . $id . " "
-                   . "AND id_version != (SELECT MAX(id) FROM version)";
-        $query = $CI->db->query($str_query);
-
-        $row = $query->row();
-
-        if ($row->count == 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     public static function delete($id) {
         $CI = get_instance();
 
@@ -371,7 +411,7 @@ class Card extends CI_Model
                 return new utils\errors\DVB_Error();
             }
         } else {
-            $current_version = Version::get_current_version();
+            $current_version = Version::find_current_version();
 
             /********************************************************/
             $CI->db->where('id_card', $id);
@@ -410,7 +450,7 @@ class Card extends CI_Model
             /********************************************************/
 
             /********************************************************/
-            $decks = Deck::get_all_with_contains_current_card($id);
+            $decks = Deck::find_all_with_contains_current_card($id);
             foreach ($decks as $deck) {
                 if ($deck->contains_current_card) {
                     if ( ! Card_move::set_last_move($id, $deck->get_id(), false)) {
@@ -476,48 +516,70 @@ class Card extends CI_Model
             }
         }
     }
+    /********************************************************/
 
-    public static function get_by_id($id) {
+    public static function get_max_num() {
         $CI = get_instance();
 
-        $CI->load->model('Card_content');
+        $CI->db->select_max('num', 'max_num');
+        $query = $CI->db->get('card');
+        $row = $query->row();
 
-        $id = (int) $id;
+        $retour = (int) $row->max_num;
+        return $retour;
+    }
 
-        $CI->db->select('num, is_deleted');
-        $CI->db->from('card');
-        $CI->db->where('id', $id);
+    private static function convert_word($word) {
+        $retour = $word;
+        $retour = str_replace("\r\n", "\n", $retour);
+        $retour = str_replace(
+            array("\r", "\n"),
+            "<br />",
+            $retour
+        );
 
-        $query_card = $CI->db->get();
+        return $retour;
+    }
 
-        if ($query_card->num_rows() == 1) {
-            $row_card = $query_card->row();
+    public static function num_is_free($num) {
+        $CI = get_instance();
 
-            $card_num         = (int) $row_card->num;
-            $card_is_deleted  = (bool) $row_card->is_deleted;
+        $CI->db->from('card')
+               ->where('num', $num)
+               ->where('is_deleted', false);
+        if ($CI->db->count_all_results() == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-            $CI->db->select('id')
-                   ->from('card_content')
-                   ->where('id_card', $id)
-                   ->where('is_last', true);
-            $query_card_content = $CI->db->get();
+    public static function card_is_deleted($id) {
+        $CI = get_instance();
 
-            if ($query_card_content->num_rows() == 0) {
-                return false;
-            }
-            $row_card_content = $query_card_content->row();
+        $CI->db->from('card')
+               ->where('id', $id)
+               ->where('is_deleted', false);
+        if ($CI->db->count_all_results() == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-            $card_content = Card_content::get_by_id($row_card_content->id);
-            if ($card_content === false) {
-                return false;
-            }
-            
-            return self::make(
-                $id,
-                $card_num,
-                $card_content,
-                $card_is_deleted
-            );
+    public static function never_versioned($id) {
+        $CI = get_instance();
+
+        $str_query = "SELECT COUNT(*) AS count "
+                   . "FROM card_content "
+                   . "WHERE id_card = " . $id . " "
+                   . "AND id_version != (SELECT MAX(id) FROM version)";
+        $query = $CI->db->query($str_query);
+
+        $row = $query->row();
+
+        if ($row->count == 0) {
+            return true;
         } else {
             return false;
         }
@@ -550,54 +612,6 @@ class Card extends CI_Model
         );
 
         $retour = (bool) preg_match($needle, $haystack);
-
-        return $retour;
-    }
-
-    public static function get_searched_cards($searched_str, $is_case_sensitive, $language, $state) {
-        $CI = get_instance();
-
-        $CI->load->model('Card_content');
-
-        $retour = array();
-
-        $CI->db->select('card.id as card_id, card.num, card.is_deleted, card_content.id as card_content_id, card_content.word_english, card_content.word_french, card_content.is_active_english, card_content.is_active_french');
-        $CI->db->from('card');
-        $CI->db->join('card_content', 'card.id = card_content.id_card');
-        $CI->db->where('card_content.is_last', true);
-
-        if ($state === 'deleted') {
-            $CI->db->where('card.is_deleted', true);
-        } elseif ($state === 'not_deleted') {
-            $CI->db->where('card.is_deleted', false);
-        }
-
-        $query = $CI->db->get();
-
-        $search_in_en = ($language == 'only_en') || ($language == 'both');
-        $search_in_fr = ($language == 'only_fr') || ($language == 'both');
-
-        foreach ($query->result() as $row) {
-            if (($searched_str === '')
-                || ($search_in_en && self::str_match($searched_str, $row->word_english, $is_case_sensitive))
-                || ($search_in_fr && self::str_match($searched_str, $row->word_french, $is_case_sensitive))
-            ) {
-                $card_content = Card_content::make(
-                    (int) $row->card_content_id,
-                    $row->word_english,
-                    $row->word_french,
-                    (bool) $row->is_active_english,
-                    (bool) $row->is_active_french,
-                    true
-                );
-                $retour[] = self::make(
-                    (int) $row->card_id,
-                    (int) $row->num,
-                    $card_content,
-                    (bool) $row->is_deleted
-                );
-            }
-        }
 
         return $retour;
     }

@@ -25,6 +25,9 @@ class Version extends CI_Model
         return $retour;
     }
 
+    /********************************************************/
+    /*                 The getters/setters                  */
+    /********************************************************/
     public function get_id() {
         return $this->id;
     }
@@ -87,33 +90,12 @@ class Version extends CI_Model
     public function set_card_moves($card_moves) {
         $this->card_moves = $card_moves;
     }
-    
     /********************************************************/
-    
-    public static function get_current_version() {
-        $CI = get_instance();
 
-        $str_query = "SELECT id, database_version, app_version_code, app_version_name "
-                   . "FROM version "
-                   . "WHERE id = (SELECT MAX(id) FROM version)";
-        $query = $CI->db->query($str_query);
-
-        $row = $query->row();
-
-        $database_version = (empty($row->database_version)) ? null : (int) $row->database_version;
-        $app_version_code = (empty($row->app_version_code)) ? null : (int) $row->app_version_code;
-        $app_version_name = (empty($row->app_version_name)) ? null : $row->app_version_name;
-
-        return self::make(
-            (int) $row->id,
-            $database_version,
-            $app_version_code,
-            $app_version_name,
-            null
-        );
-    }
-
-    public static function get_by_id($id) {
+    /********************************************************/
+    /*                    The finders                       */
+    /********************************************************/
+    public static function find($id) {
         $CI = get_instance();
 
         $id = (int) $id;
@@ -144,12 +126,46 @@ class Version extends CI_Model
         }
     }
 
+    public static function find_current_version() {
+        $CI = get_instance();
+
+        $str_query = "SELECT id, database_version, app_version_code, app_version_name "
+                   . "FROM version "
+                   . "WHERE id = (SELECT MAX(id) FROM version)";
+        $query = $CI->db->query($str_query);
+
+        $row = $query->row();
+
+        $database_version = (empty($row->database_version)) ? null : (int) $row->database_version;
+        $app_version_code = (empty($row->app_version_code)) ? null : (int) $row->app_version_code;
+        $app_version_name = (empty($row->app_version_name)) ? null : $row->app_version_name;
+
+        return self::make(
+            (int) $row->id,
+            $database_version,
+            $app_version_code,
+            $app_version_name,
+            null
+        );
+    }
+    /********************************************************/
+
+    /********************************************************/
+    /*                    The withers                       */
+    /********************************************************/
+    /********************************************************/
+
+    /********************************************************/
+    /*                   The modifiers                      */
+    /********************************************************/
+    /********************************************************/
+
     public static function freeze($database_version, $app_version_code , $app_version_name) {
         $CI = get_instance();
 
         $now = new DateTime();
 
-        $current_version = self::get_current_version();
+        $current_version = self::find_current_version();
 
         $data = array(
             'database_version'  => $database_version,
@@ -173,7 +189,7 @@ class Version extends CI_Model
         }
     }
 
-    public function compare(Version $version_before) {
+    public function compare_to(Version $version_before) {
         $this->load->model('Card_content');
 
         if ($this->get_id() <= $version_before->get_id()) {

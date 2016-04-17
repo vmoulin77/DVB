@@ -64,7 +64,7 @@ class Deck_controller extends CI_Controller
                      ->menu();
 
         if ($this->form_validation->run() === false) {
-            $deck = Deck::get_by_id($id);
+            $deck = Deck::find($id);
 
             $data = array(
                 'id'    => $id,
@@ -121,7 +121,7 @@ class Deck_controller extends CI_Controller
     public function view_all() {
         $this->load->model('Deck');
 
-        $decks = Deck::get_all_with_version();
+        $decks = Deck::find_all_with_version_when_created();
 
         $this->layout->add_basic_assets()
                      ->menu()

@@ -19,7 +19,7 @@ class Campaign_controller extends CI_Controller
         $this->layout->add_basic_assets()
                      ->menu();
 
-        $decks = Deck::get_all();
+        $decks = Deck::find_all();
 
         if ($this->form_validation->run() === false) {
             $data = array(
@@ -66,7 +66,7 @@ class Campaign_controller extends CI_Controller
                      ->menu();
 
         if ($this->form_validation->run() === false) {
-            $campaign = Campaign::get_by_id($id);
+            $campaign = Campaign::find($id);
 
             $data = array(
                 'action'  => $this->router->method,
@@ -122,7 +122,7 @@ class Campaign_controller extends CI_Controller
     public function view_all() {
         $this->load->model('Campaign');
 
-        $campaigns = Campaign::get_all_with_next_id_card();
+        $campaigns = Campaign::find_all_with_next_id_card();
 
         $this->layout->add_basic_assets()
                      ->menu()

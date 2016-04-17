@@ -110,7 +110,7 @@ class Card_controller extends CI_Controller
                 } else {
                     $this->load->model('Campaign');
 
-                    $campaign = Campaign::get_by_id($id_campaign);
+                    $campaign = Campaign::find($id_campaign);
                     $campaign->with_next_id_card();
                     if ($campaign->next_id_card === null) {
                         $this->layout->view('controllers/Campaign/actions/completed');
@@ -166,7 +166,7 @@ class Card_controller extends CI_Controller
             $language           = ($this->input->post('language') !== null) ? $this->input->post('language') : 'both';
             $state              = ($this->input->post('state') !== null) ? $this->input->post('state') : 'both';
 
-            $searched_cards = Card::get_searched_cards($searched_str, $is_case_sensitive, $language, $state);
+            $searched_cards = Card::find_searched_cards($searched_str, $is_case_sensitive, $language, $state);
             $data['searched_cards'] = $searched_cards;
         }
 
@@ -193,7 +193,7 @@ class Card_controller extends CI_Controller
         }
         $data['card'] = $card;
 
-        $decks = Deck::get_all_with_contains_current_card($id);
+        $decks = Deck::find_all_with_contains_current_card($id);
         $data['decks'] = $decks;
 
         $this->layout->add_basic_assets()

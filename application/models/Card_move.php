@@ -18,6 +18,9 @@ class Card_move extends CI_Model
         return $retour;
     }
 
+    /********************************************************/
+    /*                 The getters/setters                  */
+    /********************************************************/
     public function get_type() {
         return $this->type;
     }
@@ -52,7 +55,21 @@ class Card_move extends CI_Model
     public function set_version($version) {
         $this->version = $version;
     }
+    /********************************************************/
 
+    /********************************************************/
+    /*                    The finders                       */
+    /********************************************************/
+    /********************************************************/
+
+    /********************************************************/
+    /*                    The withers                       */
+    /********************************************************/
+    /********************************************************/
+
+    /********************************************************/
+    /*                   The modifiers                      */
+    /********************************************************/
     /********************************************************/
 
     public static function set_last_move($id_card, $id_deck, $is_last) {
@@ -122,7 +139,7 @@ class Card_move extends CI_Model
             return new utils\errors\DVB_Error('MOVE_ERROR', 'The card is already in the deck.');
         }
 
-        $current_version = Version::get_current_version();
+        $current_version = Version::find_current_version();
 
         if (($query->num_rows() == 0)
             || ($row->id_version < $current_version->get_id())

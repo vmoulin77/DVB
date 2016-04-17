@@ -19,7 +19,7 @@ html {
 
 body {
     background-color: $opaque-blue;
-    color: black;
+    color: $black;
     font-family: Verdana;
     font-size: 14px;
 }
@@ -71,7 +71,7 @@ footer {
 /* Menu */
 #menu {
     background-color: $opaque-blue;
-    color: black;
+    color: $black;
     height: 100%;
     border-right: solid 2px;
     border-bottom: solid 2px;
@@ -82,7 +82,7 @@ footer {
         display: block;
         font-size: 18px;
         font-weight: bold;
-        border-top: solid 2px black;
+        border-top: solid 2px $black;
         margin: 0;
         padding: 10px 0;
         cursor: pointer;
@@ -97,7 +97,7 @@ footer {
     }
     
     .menu-color-dark, .menu-color-light:hover, ul li a {
-        color: white;
+        color: $white;
     }
     
     ul {
@@ -131,7 +131,7 @@ footer {
     border-collapse: collapse;
 
     > thead > tr > th, > tbody > tr > td {
-        border: 1px solid black;
+        border: 1px solid $black;
         padding: 5px;
     }
 

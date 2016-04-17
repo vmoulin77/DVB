@@ -25,6 +25,9 @@ class Card_content extends CI_Model
         return $retour;
     }
 
+    /********************************************************/
+    /*                 The getters/setters                  */
+    /********************************************************/
     public function get_id() {
         return $this->id;
     }
@@ -80,13 +83,49 @@ class Card_content extends CI_Model
     public function set_version($version) {
         $this->version = $version;
     }
-
     /********************************************************/
 
+    /********************************************************/
+    /*                    The finders                       */
+    /********************************************************/
+    public static function find($id) {
+        $CI = get_instance();
+
+        $id = (int) $id;
+
+        $CI->db->select('word_english, word_french, is_active_english, is_active_french, is_last')
+               ->from('card_content')
+               ->where('id', $id);
+        $query = $CI->db->get();
+
+        if ($query->num_rows() == 1) {
+            $row = $query->row();
+            
+            $card_content_is_active_english  = (bool) $row->is_active_english;
+            $card_content_is_active_french   = (bool) $row->is_active_french;
+            $card_content_is_last            = (bool) $row->is_last;
+
+            return self::make(
+                $id,
+                $row->word_english,
+                $row->word_french,
+                $card_content_is_active_english,
+                $card_content_is_active_french,
+                $card_content_is_last
+            );
+        } else {
+            return false;
+        }
+    }
+    /********************************************************/
+
+    /********************************************************/
+    /*                    The withers                       */
+    /********************************************************/
     public function with_version() {
         $this->load->model('Version');
 
-        $current_version = Version::get_current_version();
+        $current_version = Version::find_current_version();
 
         $this->db->select('version.id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
                  ->from('card_content')
@@ -116,34 +155,10 @@ class Card_content extends CI_Model
             return new utils\errors\DVB_Error();
         }
     }
+    /********************************************************/
 
-    public static function get_by_id($id) {
-        $CI = get_instance();
-
-        $id = (int) $id;
-
-        $CI->db->select('word_english, word_french, is_active_english, is_active_french, is_last')
-               ->from('card_content')
-               ->where('id', $id);
-        $query = $CI->db->get();
-
-        if ($query->num_rows() == 1) {
-            $row = $query->row();
-            
-            $card_content_is_active_english  = (bool) $row->is_active_english;
-            $card_content_is_active_french   = (bool) $row->is_active_french;
-            $card_content_is_last            = (bool) $row->is_last;
-
-            return self::make(
-                $id,
-                $row->word_english,
-                $row->word_french,
-                $card_content_is_active_english,
-                $card_content_is_active_french,
-                $card_content_is_last
-            );
-        } else {
-            return false;
-        }
-    }
+    /********************************************************/
+    /*                   The modifiers                      */
+    /********************************************************/
+    /********************************************************/
 }

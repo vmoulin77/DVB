@@ -18,6 +18,9 @@ class Campaign extends CI_Model
         return $retour;
     }
 
+    /********************************************************/
+    /*                 The getters/setters                  */
+    /********************************************************/
     public function get_id() {
         return $this->id;
     }
@@ -38,9 +41,77 @@ class Campaign extends CI_Model
     public function set_created_at($created_at) {
         $this->created_at = $created_at;
     }
-
     /********************************************************/
 
+    /********************************************************/
+    /*                    The finders                       */
+    /********************************************************/
+    public static function find($id) {
+        $CI = get_instance();
+
+        $id = (int) $id;
+
+        $CI->db->select('name, created_at')
+               ->from('campaign')
+               ->where('id', $id);
+
+        $query = $CI->db->get();
+
+        if ($query->num_rows() == 1) {
+            $row = $query->row();
+            
+            $campaign_created_at = new DateTime($row->created_at);
+
+            return self::make(
+                $id,
+                $row->name,
+                $campaign_created_at
+            );
+        } else {
+            return false;
+        }
+    }
+
+    public static function find_all() {
+        $CI = get_instance();
+
+        $CI->db->select('id, name, created_at')
+               ->from('campaign')
+               ->order_by('created_at', 'ASC');
+
+        $query = $CI->db->get();
+
+        $retour = array();
+
+        foreach ($query->result() as $row) {
+            $campaign = self::make(
+                (int) $row->id,
+                $row->name,
+                new DateTime($row->created_at)
+            );
+
+            $retour[] = $campaign;
+        }
+
+        return $retour;
+    }
+
+    public static function find_all_with_next_id_card() {
+        $CI = get_instance();
+
+        $campaigns = self::find_all();
+
+        foreach ($campaigns as &$campaign) {
+            $campaign->with_next_id_card();
+        }
+
+        return $campaigns;
+    }
+    /********************************************************/
+
+    /********************************************************/
+    /*                    The withers                       */
+    /********************************************************/
     public function with_next_id_card() {
         $this->db->select('id_card')
                  ->from('campaign_card')
@@ -56,7 +127,11 @@ class Campaign extends CI_Model
             $this->next_id_card = $row->id_card;
         }
     }
+    /********************************************************/
 
+    /********************************************************/
+    /*                   The modifiers                      */
+    /********************************************************/
     public static function insert($name, $id_deck) {
         $CI = get_instance();
 
@@ -110,18 +185,6 @@ class Campaign extends CI_Model
         }
     }
 
-    public static function campaign_is_deleted($id) {
-        $CI = get_instance();
-
-        $CI->db->from('campaign')
-               ->where('id', $id);
-        if ($CI->db->count_all_results() == 0) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     public static function update($id, $data) {
         $CI = get_instance();
 
@@ -155,66 +218,17 @@ class Campaign extends CI_Model
             return new utils\errors\DVB_Error();
         }
     }
+    /********************************************************/
 
-    public static function get_by_id($id) {
+    public static function campaign_is_deleted($id) {
         $CI = get_instance();
 
-        $id = (int) $id;
-
-        $CI->db->select('name, created_at')
-               ->from('campaign')
+        $CI->db->from('campaign')
                ->where('id', $id);
-
-        $query = $CI->db->get();
-
-        if ($query->num_rows() == 1) {
-            $row = $query->row();
-            
-            $campaign_created_at = new DateTime($row->created_at);
-
-            return self::make(
-                $id,
-                $row->name,
-                $campaign_created_at
-            );
+        if ($CI->db->count_all_results() == 0) {
+            return true;
         } else {
             return false;
         }
-    }
-
-    public static function get_all() {
-        $CI = get_instance();
-
-        $CI->db->select('id, name, created_at')
-               ->from('campaign')
-               ->order_by('created_at', 'ASC');
-
-        $query = $CI->db->get();
-
-        $retour = array();
-
-        foreach ($query->result() as $row) {
-            $campaign = self::make(
-                (int) $row->id,
-                $row->name,
-                new DateTime($row->created_at)
-            );
-
-            $retour[] = $campaign;
-        }
-
-        return $retour;
-    }
-
-    public static function get_all_with_next_id_card() {
-        $CI = get_instance();
-
-        $campaigns = self::get_all();
-
-        foreach ($campaigns as &$campaign) {
-            $campaign->with_next_id_card();
-        }
-
-        return $campaigns;
     }
 }

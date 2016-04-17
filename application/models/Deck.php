@@ -20,6 +20,9 @@ class Deck extends CI_Model
         return $retour;
     }
 
+    /********************************************************/
+    /*                 The getters/setters                  */
+    /********************************************************/
     public function get_id() {
         return $this->id;
     }
@@ -91,6 +94,206 @@ class Deck extends CI_Model
     public function set_card_moves($card_moves) {
         $this->card_moves = $card_moves;
     }
+    /********************************************************/
+
+    /********************************************************/
+    /*                    The finders                       */
+    /********************************************************/
+    public static function find($id) {
+        $CI = get_instance();
+
+        $id = (int) $id;
+
+        $CI->db->select('num, name')
+               ->from('deck')
+               ->where('id', $id);
+
+        $query = $CI->db->get();
+
+        if ($query->num_rows() == 1) {
+            $row = $query->row();
+
+            $deck_num = (int) $row->num;
+            
+            return self::make(
+                $id,
+                $deck_num,
+                $row->name
+            );
+        } else {
+            return false;
+        }
+    }
+
+    public static function find_all() {
+        $CI = get_instance();
+
+        $CI->db->select('id, num, name')
+               ->from('deck')
+               ->order_by('id', 'ASC');
+
+        $query = $CI->db->get();
+
+        $retour = array();
+
+        foreach ($query->result() as $row) {
+            $deck = self::make(
+                (int) $row->id,
+                (int) $row->num,
+                $row->name
+            );
+
+            $retour[] = $deck;
+        }
+
+        return $retour;
+    }
+
+    public static function find_all_with_version_when_created() {
+        $CI = get_instance();
+
+        $CI->load->model('Version');
+
+        $CI->db->select('deck.id as deck_id, deck.num, deck.name, version.id as version_id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
+               ->from('deck')
+               ->join('version', 'version.id = deck.id_version_when_created')
+               ->order_by('deck.id', 'ASC');
+
+        $query = $CI->db->get();
+
+        $retour = array();
+
+        $current_version = Version::find_current_version();
+
+        foreach ($query->result() as $row) {
+            if ($row->version_id == $current_version->get_id()) {
+                $version_when_created = $current_version;
+            } else {
+                $version_when_created = Version::make(
+                    (int) $row->version_id,
+                    (int) $row->database_version,
+                    (int) $row->app_version_code,
+                    $row->app_version_name,
+                    new DateTime($row->created_at)
+                );
+            }
+
+            $deck = self::make(
+                (int) $row->deck_id,
+                (int) $row->num,
+                $row->name
+            );
+
+            $deck->set_version_when_created($version_when_created);
+
+            $retour[] = $deck;
+        }
+
+        return $retour;
+    }
+
+    public static function find_all_with_contains_current_card($id_card) {
+        $CI = get_instance();
+
+        $decks = self::find_all();
+
+        foreach ($decks as &$deck) {
+            $CI->db->from('card_deck_version')
+                   ->where('card_deck_version.id_card', $id_card)
+                   ->where('card_deck_version.id_deck', $deck->id)
+                   ->where('card_deck_version.is_last', true)
+                   ->where('card_deck_version.type', 'add');
+
+            if ($CI->db->count_all_results() == 0) {
+                $deck->contains_current_card = false;
+            } else {
+                $deck->contains_current_card = true;
+            }
+        }
+
+        return $decks;
+    }
+    /********************************************************/
+
+    /********************************************************/
+    /*                    The withers                       */
+    /********************************************************/
+    /********************************************************/
+
+    /********************************************************/
+    /*                   The modifiers                      */
+    /********************************************************/
+    public static function insert($num, $name) {
+        $CI = get_instance();
+
+        $CI->load->model('Version');
+
+        if ( ! self::num_is_free($num)) {
+            $CI->transaction->set_as_rollback();
+            return new utils\errors\DVB_Error('INSERT_ERROR', "The deck number is not free.");
+        }
+
+        $current_version = Version::find_current_version();
+
+        $data = array(
+            'num'                      => $num,
+            'name'                     => $name,
+            'id_version_when_created'  => $current_version->get_id(),
+        );
+
+        if ($CI->db->insert('deck', $data)) {
+            return true;
+        } else {
+            $CI->transaction->set_as_rollback();
+            return new utils\errors\DVB_Error();
+        }
+    }
+
+    public static function update($id, $data) {
+        $CI = get_instance();
+
+        if (self::deck_is_deleted($id)) {
+            $CI->transaction->set_as_rollback();
+            return new utils\errors\DVB_Error('UPDATE_ERROR', "The deck doesn't exist anymore.");
+        }
+
+        $deck = self::find($id);
+
+        if (isset($data['num'])
+            && ($data['num'] != $deck->num)
+        ) {
+            if ( ! self::num_is_free($data['num'])) {
+                $CI->transaction->set_as_rollback();
+                return new utils\errors\DVB_Error('UPDATE_ERROR', 'The deck number is not free.');
+            }
+        }
+
+        $CI->db->set($data)
+               ->where('id', $id);
+
+        if ($CI->db->update('deck')) {
+            return true;
+        } else {
+            $CI->transaction->set_as_rollback();
+            return new utils\errors\DVB_Error();
+        }
+    }
+
+    public static function delete($id) {
+        $CI = get_instance();
+
+        $CI->db->where('id', $id);
+        if ($CI->db->delete('deck')) {
+            if ($CI->db->affected_rows() == 1) {
+                return true;
+            } else {
+                return new utils\errors\DVB_Error('DELETE_ERROR', "The deck doesn't exist anymore.");
+            }
+        } else {
+            return new utils\errors\DVB_Error();
+        }
+    }
+    /********************************************************/
 
     /********************************************************/
 
@@ -135,32 +338,6 @@ class Deck extends CI_Model
         }
     }
 
-    public static function insert($num, $name) {
-        $CI = get_instance();
-
-        $CI->load->model('Version');
-
-        if ( ! self::num_is_free($num)) {
-            $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error('INSERT_ERROR', "The deck number is not free.");
-        }
-
-        $current_version = Version::get_current_version();
-
-        $data = array(
-            'num'                      => $num,
-            'name'                     => $name,
-            'id_version_when_created'  => $current_version->get_id(),
-        );
-
-        if ($CI->db->insert('deck', $data)) {
-            return true;
-        } else {
-            $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error();
-        }
-    }
-
     public static function deck_is_deleted($id) {
         $CI = get_instance();
 
@@ -171,165 +348,5 @@ class Deck extends CI_Model
         } else {
             return false;
         }
-    }
-
-    public static function update($id, $data) {
-        $CI = get_instance();
-
-        if (self::deck_is_deleted($id)) {
-            $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error('UPDATE_ERROR', "The deck doesn't exist anymore.");
-        }
-
-        $deck = self::get_by_id($id);
-
-        if (isset($data['num'])
-            && ($data['num'] != $deck->num)
-        ) {
-            if ( ! self::num_is_free($data['num'])) {
-                $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error('UPDATE_ERROR', 'The deck number is not free.');
-            }
-        }
-
-        $CI->db->set($data)
-               ->where('id', $id);
-
-        if ($CI->db->update('deck')) {
-            return true;
-        } else {
-            $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error();
-        }
-    }
-
-    public static function delete($id) {
-        $CI = get_instance();
-
-        $CI->db->where('id', $id);
-        if ($CI->db->delete('deck')) {
-            if ($CI->db->affected_rows() == 1) {
-                return true;
-            } else {
-                return new utils\errors\DVB_Error('DELETE_ERROR', "The deck doesn't exist anymore.");
-            }
-        } else {
-            return new utils\errors\DVB_Error();
-        }
-    }
-
-    public static function get_by_id($id) {
-        $CI = get_instance();
-
-        $id = (int) $id;
-
-        $CI->db->select('num, name')
-               ->from('deck')
-               ->where('id', $id);
-
-        $query = $CI->db->get();
-
-        if ($query->num_rows() == 1) {
-            $row = $query->row();
-
-            $deck_num = (int) $row->num;
-            
-            return self::make(
-                $id,
-                $deck_num,
-                $row->name
-            );
-        } else {
-            return false;
-        }
-    }
-
-    public static function get_all() {
-        $CI = get_instance();
-
-        $CI->db->select('id, num, name')
-               ->from('deck')
-               ->order_by('id', 'ASC');
-
-        $query = $CI->db->get();
-
-        $retour = array();
-
-        foreach ($query->result() as $row) {
-            $deck = self::make(
-                (int) $row->id,
-                (int) $row->num,
-                $row->name
-            );
-
-            $retour[] = $deck;
-        }
-
-        return $retour;
-    }
-
-    public static function get_all_with_contains_current_card($id_card) {
-        $CI = get_instance();
-
-        $decks = self::get_all();
-
-        foreach ($decks as &$deck) {
-            $CI->db->from('card_deck_version')
-                   ->where('card_deck_version.id_card', $id_card)
-                   ->where('card_deck_version.id_deck', $deck->id)
-                   ->where('card_deck_version.is_last', true)
-                   ->where('card_deck_version.type', 'add');
-
-            if ($CI->db->count_all_results() == 0) {
-                $deck->contains_current_card = false;
-            } else {
-                $deck->contains_current_card = true;
-            }
-        }
-
-        return $decks;
-    }
-
-    public static function get_all_with_version() {
-        $CI = get_instance();
-
-        $CI->load->model('Version');
-
-        $CI->db->select('deck.id as deck_id, deck.num, deck.name, version.id as version_id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
-               ->from('deck')
-               ->join('version', 'version.id = deck.id_version_when_created')
-               ->order_by('deck.id', 'ASC');
-
-        $query = $CI->db->get();
-
-        $retour = array();
-
-        $current_version = Version::get_current_version();
-
-        foreach ($query->result() as $row) {
-            if ($row->version_id == $current_version->get_id()) {
-                $version = $current_version;
-            } else {
-                $version = Version::make(
-                    (int) $row->version_id,
-                    (int) $row->database_version,
-                    (int) $row->app_version_code,
-                    $row->app_version_name,
-                    new DateTime($row->created_at)
-                );
-            }
-
-            $deck = self::make(
-                (int) $row->deck_id,
-                (int) $row->num,
-                $row->name
-            );
-
-            $deck->set_version_when_created($version);
-
-            $retour[] = $deck;
-        }
-
-        return $retour;
     }
 }

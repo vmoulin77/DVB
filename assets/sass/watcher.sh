@@ -17,6 +17,9 @@ css[3]="css/controllers/Card/controller.css"
 sass[4]="sass/controllers/Card/actions/view.scss"
 css[4]="css/controllers/Card/actions/view.css"
 
+sass[5]="sass/controllers/Version/actions/compare.scss"
+css[5]="css/controllers/Version/actions/compare.css"
+
 watcher="sass --watch --cache-location $HOME/.cache/sass --sourcemap=none"
 
 for (( i=0; i < ${#sass[@]}; i++ )); do
