@@ -77,7 +77,7 @@ class Card_controller extends CI_Controller
                      ->menu();
 
         if ($this->form_validation->run() === false) {
-            $card = Card::get_by_id($id);
+            $card = Card::find($id);
             $data = array(
                 'id'                 => $id,
                 'num'                => $card->get_num(),
@@ -185,7 +185,7 @@ class Card_controller extends CI_Controller
 
         $data['id'] = $id;
 
-        $card = Card::get_by_id($id);
+        $card = Card::find($id);
         $card->with_version_when_deleted();
         $card->with_card_contents_history();
         foreach ($card->get_card_contents_history() as &$card_content) {

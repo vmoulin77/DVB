@@ -1,6 +1,6 @@
 <?php
 
-class Review_record extends CI_Model
+class Review_record extends MY_Model
 {
     private $is_done;
     private $card_is_modified;

@@ -64,6 +64,7 @@ $autoload['libraries'] = array(
     'form_validation',
     'utils_autoloader',
     'transaction',
+    'export',
 );
 
 /*

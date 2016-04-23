@@ -1,5 +1,5 @@
 <?php
-namespace exceptions;
+namespace utils\exceptions;
 
 class Database_exception extends \Exception {
     public function __toString() {

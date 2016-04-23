@@ -9,7 +9,7 @@ class Global_transaction
     public function __construct() {
         $this->CI =& get_instance();
 
-        $actions_without_global_trans = $this->config->item('actions_without_global_trans');
+        $actions_without_global_trans = $this->CI->config->item('actions_without_global_trans');
         if (isset($actions_without_global_trans[$this->CI->router->class])
             && in_array($this->CI->router->method, $actions_without_global_trans[$this->CI->router->class])
         ) {

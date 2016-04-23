@@ -10,12 +10,8 @@ class Export_controller extends CI_Controller
     }
 
     public function process() {
-        $this->load->model('Export');
-
-        $result = Export::process();
-
-        $this->output->set_header('Content-type: text/xml');
+        $this->output->set_content_type('text/xml');
         $this->output->set_header('Content-Disposition: attachment; filename="DVB_Export.xml"');
-        echo $result;
+        $this->output->set_output($this->export->process());
     }
 }

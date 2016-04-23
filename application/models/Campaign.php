@@ -1,6 +1,6 @@
 <?php
 
-class Campaign extends CI_Model
+class Campaign extends MY_Model
 {
     private $id;
     private $name;
@@ -46,38 +46,17 @@ class Campaign extends CI_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find($id) {
+    public static function find_all(utils\finder\Finder_manager $finder_manager = null) {
         $CI = get_instance();
 
-        $id = (int) $id;
-
-        $CI->db->select('name, created_at')
-               ->from('campaign')
-               ->where('id', $id);
-
-        $query = $CI->db->get();
-
-        if ($query->num_rows() == 1) {
-            $row = $query->row();
-            
-            $campaign_created_at = new DateTime($row->created_at);
-
-            return self::make(
-                $id,
-                $row->name,
-                $campaign_created_at
-            );
-        } else {
-            return false;
+        if ($finder_manager === null) {
+            $finder_manager = new utils\finder\Finder_manager();
         }
-    }
-
-    public static function find_all() {
-        $CI = get_instance();
 
         $CI->db->select('id, name, created_at')
-               ->from('campaign')
-               ->order_by('created_at', 'ASC');
+               ->from('campaign');
+
+        $finder_manager->complete_query();
 
         $query = $CI->db->get();
 
@@ -93,19 +72,9 @@ class Campaign extends CI_Model
             $retour[] = $campaign;
         }
 
+        $finder_manager->exec_withers($retour);
+
         return $retour;
-    }
-
-    public static function find_all_with_next_id_card() {
-        $CI = get_instance();
-
-        $campaigns = self::find_all();
-
-        foreach ($campaigns as &$campaign) {
-            $campaign->with_next_id_card();
-        }
-
-        return $campaigns;
     }
     /********************************************************/
 

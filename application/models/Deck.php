@@ -1,6 +1,6 @@
 <?php
 
-class Deck extends CI_Model
+class Deck extends MY_Model
 {
     private $id;
     private $num;
@@ -99,38 +99,17 @@ class Deck extends CI_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find($id) {
+    public static function find_all(utils\finder\Finder_manager $finder_manager = null) {
         $CI = get_instance();
 
-        $id = (int) $id;
-
-        $CI->db->select('num, name')
-               ->from('deck')
-               ->where('id', $id);
-
-        $query = $CI->db->get();
-
-        if ($query->num_rows() == 1) {
-            $row = $query->row();
-
-            $deck_num = (int) $row->num;
-            
-            return self::make(
-                $id,
-                $deck_num,
-                $row->name
-            );
-        } else {
-            return false;
+        if ($finder_manager === null) {
+            $finder_manager = new utils\finder\Finder_manager();
         }
-    }
-
-    public static function find_all() {
-        $CI = get_instance();
 
         $CI->db->select('id, num, name')
-               ->from('deck')
-               ->order_by('id', 'ASC');
+               ->from('deck');
+
+        $finder_manager->complete_query();
 
         $query = $CI->db->get();
 
@@ -146,48 +125,7 @@ class Deck extends CI_Model
             $retour[] = $deck;
         }
 
-        return $retour;
-    }
-
-    public static function find_all_with_version_when_created() {
-        $CI = get_instance();
-
-        $CI->load->model('Version');
-
-        $CI->db->select('deck.id as deck_id, deck.num, deck.name, version.id as version_id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
-               ->from('deck')
-               ->join('version', 'version.id = deck.id_version_when_created')
-               ->order_by('deck.id', 'ASC');
-
-        $query = $CI->db->get();
-
-        $retour = array();
-
-        $current_version = Version::find_current_version();
-
-        foreach ($query->result() as $row) {
-            if ($row->version_id == $current_version->get_id()) {
-                $version_when_created = $current_version;
-            } else {
-                $version_when_created = Version::make(
-                    (int) $row->version_id,
-                    (int) $row->database_version,
-                    (int) $row->app_version_code,
-                    $row->app_version_name,
-                    new DateTime($row->created_at)
-                );
-            }
-
-            $deck = self::make(
-                (int) $row->deck_id,
-                (int) $row->num,
-                $row->name
-            );
-
-            $deck->set_version_when_created($version_when_created);
-
-            $retour[] = $deck;
-        }
+        $finder_manager->exec_withers($retour);
 
         return $retour;
     }
@@ -218,6 +156,38 @@ class Deck extends CI_Model
     /********************************************************/
     /*                    The withers                       */
     /********************************************************/
+    public function with_version_when_created() {
+        $this->load->model('Version');
+
+        $current_version = Version::find_current_version();
+
+        $this->db->select('version.id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
+                 ->from('deck')
+                 ->join('version', 'version.id = deck.id_version_when_created')
+                 ->where('deck.id', $this->id);
+
+        $query = $this->db->get();
+        $row = $query->row();
+
+        if ($query->num_rows() == 1) {
+            if ($row->id == $current_version->get_id()) {
+                $version_when_created = $current_version;
+            } else {
+                $version_when_created = Version::make(
+                    (int) $row->id,
+                    (int) $row->database_version,
+                    (int) $row->app_version_code,
+                    $row->app_version_name,
+                    new DateTime($row->created_at)
+                );
+            }
+        } else {
+            return new utils\errors\DVB_Error();
+        }
+
+        $this->set_version_when_created($version_when_created);
+        return $this;
+    }
     /********************************************************/
 
     /********************************************************/

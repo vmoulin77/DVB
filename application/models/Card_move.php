@@ -1,6 +1,6 @@
 <?php
 
-class Card_move extends CI_Model
+class Card_move extends MY_Model
 {
     private $type;
     private $is_last;
