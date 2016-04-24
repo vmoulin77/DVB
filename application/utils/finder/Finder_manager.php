@@ -15,6 +15,8 @@ class Finder_manager
     public function model($model) {
         $this->CI->load->model($model);
         $this->model = $model;
+
+        return $this;
     }
 
     public function __call($method, $args) {
@@ -22,10 +24,14 @@ class Finder_manager
             'method'  => $method,
             'args'    => $args
         );
+
+        return $this;
     }
 
     public function with($with) {
         $this->with[] = $with;
+
+        return $this;
     }
 
     public function find() {

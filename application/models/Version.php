@@ -1,6 +1,6 @@
 <?php
 
-class Version extends CI_Model
+class Version extends MY_Model
 {
     private $id;
     private $database_version;
@@ -95,35 +95,42 @@ class Version extends CI_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find($id) {
+    public static function find_all(utils\finder\Finder_manager $finder_manager = null) {
         $CI = get_instance();
 
-        $id = (int) $id;
+        if ($finder_manager === null) {
+            $finder_manager = new utils\finder\Finder_manager();
+        }
 
-        $CI->db->select('database_version, app_version_code, app_version_name, created_at')
-               ->from('version')
-               ->where('id', $id);
+        $CI->db->select('id, database_version, app_version_code, app_version_name, created_at')
+               ->from('version');
+
+        $finder_manager->complete_query();
 
         $query = $CI->db->get();
 
-        if ($query->num_rows() == 1) {
-            $row = $query->row();
-            
-            $version_database_version  = (empty($row->database_version))  ? null : (int) $row->database_version;
-            $version_app_version_code  = (empty($row->app_version_code))  ? null : (int) $row->app_version_code;
-            $version_app_version_name  = (empty($row->app_version_name))  ? null : $row->app_version_name;
-            $version_created_at        = (empty($row->created_at))        ? null : new DateTime($row->created_at);
+        $retour = array();
 
-            return self::make(
-                $id,
+        foreach ($query->result() as $row) {
+            $version_database_version  = ($row->database_version == '')  ? null : (int) $row->database_version;
+            $version_app_version_code  = ($row->app_version_code == '')  ? null : (int) $row->app_version_code;
+            $version_app_version_name  = ($row->app_version_name == '')  ? null : $row->app_version_name;
+            $version_created_at        = ($row->created_at == '')        ? null : new DateTime($row->created_at);
+
+            $version = self::make(
+                (int) $row->id,
                 $version_database_version,
                 $version_app_version_code,
                 $version_app_version_name,
                 $version_created_at
             );
-        } else {
-            return false;
+
+            $retour[] = $version;
         }
+
+        $finder_manager->exec_withers($retour);
+
+        return $retour;
     }
 
     public static function find_current_version() {
@@ -136,9 +143,9 @@ class Version extends CI_Model
 
         $row = $query->row();
 
-        $database_version = (empty($row->database_version)) ? null : (int) $row->database_version;
-        $app_version_code = (empty($row->app_version_code)) ? null : (int) $row->app_version_code;
-        $app_version_name = (empty($row->app_version_name)) ? null : $row->app_version_name;
+        $database_version = ($row->database_version == '') ? null : (int) $row->database_version;
+        $app_version_code = ($row->app_version_code == '') ? null : (int) $row->app_version_code;
+        $app_version_name = ($row->app_version_name == '') ? null : $row->app_version_name;
 
         return self::make(
             (int) $row->id,

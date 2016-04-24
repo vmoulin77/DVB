@@ -1,6 +1,6 @@
 <?php
 
-class Card extends CI_Model
+class Card extends MY_Model
 {
     private $id;
     private $num;
@@ -88,50 +88,40 @@ class Card extends CI_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find($id) {
+    public static function find_all(utils\finder\Finder_manager $finder_manager = null) {
         $CI = get_instance();
 
         $CI->load->model('Card_content');
 
-        $id = (int) $id;
-
-        $CI->db->select('num, is_deleted');
-        $CI->db->from('card');
-        $CI->db->where('id', $id);
-
-        $query_card = $CI->db->get();
-
-        if ($query_card->num_rows() == 1) {
-            $row_card = $query_card->row();
-
-            $card_num         = (int) $row_card->num;
-            $card_is_deleted  = (bool) $row_card->is_deleted;
-
-            $CI->db->select('id')
-                   ->from('card_content')
-                   ->where('id_card', $id)
-                   ->where('is_last', true);
-            $query_card_content = $CI->db->get();
-
-            if ($query_card_content->num_rows() == 0) {
-                return false;
-            }
-            $row_card_content = $query_card_content->row();
-
-            $card_content = Card_content::find($row_card_content->id);
-            if ($card_content === false) {
-                return false;
-            }
-            
-            return self::make(
-                $id,
-                $card_num,
-                $card_content,
-                $card_is_deleted
-            );
-        } else {
-            return false;
+        if ($finder_manager === null) {
+            $finder_manager = new utils\finder\Finder_manager();
         }
+
+        $CI->db->select('card.id as card_id, card.num, card.is_deleted, card_content.id as card_content_id')
+               ->from('card')
+               ->join('card_content', 'card_content.id_card = card.id')
+               ->where('card_content.is_last', true);
+
+        $finder_manager->complete_query();
+
+        $query = $CI->db->get();
+
+        $retour = array();
+
+        foreach ($query->result() as $row) {
+            $card = self::make(
+                (int) $row->card_id,
+                (int) $row->num,
+                Card_content::find($row->card_content_id),
+                (bool) $row->is_deleted
+            );
+
+            $retour[] = $card;
+        }
+
+        $finder_manager->exec_withers($retour);
+
+        return $retour;
     }
 
     public static function find_searched_cards($searched_str, $is_case_sensitive, $language, $state) {

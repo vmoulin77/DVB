@@ -1,6 +1,6 @@
 <?php
 
-class Card_content extends CI_Model
+class Card_content extends MY_Model
 {
     private $id;
     private $word_english;
@@ -88,34 +88,42 @@ class Card_content extends CI_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find($id) {
+    public static function find_all(utils\finder\Finder_manager $finder_manager = null) {
         $CI = get_instance();
 
-        $id = (int) $id;
+        if ($finder_manager === null) {
+            $finder_manager = new utils\finder\Finder_manager();
+        }
 
-        $CI->db->select('word_english, word_french, is_active_english, is_active_french, is_last')
-               ->from('card_content')
-               ->where('id', $id);
+        $CI->db->select('id, word_english, word_french, is_active_english, is_active_french, is_last')
+               ->from('card_content');
+
+        $finder_manager->complete_query();
+
         $query = $CI->db->get();
 
-        if ($query->num_rows() == 1) {
-            $row = $query->row();
-            
+        $retour = array();
+
+        foreach ($query->result() as $row) {
             $card_content_is_active_english  = (bool) $row->is_active_english;
             $card_content_is_active_french   = (bool) $row->is_active_french;
             $card_content_is_last            = (bool) $row->is_last;
 
-            return self::make(
-                $id,
+            $card_content = self::make(
+                (int) $row->id,
                 $row->word_english,
                 $row->word_french,
                 $card_content_is_active_english,
                 $card_content_is_active_french,
                 $card_content_is_last
             );
-        } else {
-            return false;
+
+            $retour[] = $card_content;
         }
+
+        $finder_manager->exec_withers($retour);
+
+        return $retour;
     }
     /********************************************************/
 
