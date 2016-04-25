@@ -95,6 +95,8 @@ class Campaign extends MY_Model
             $row = $query->row();
             $this->next_id_card = $row->id_card;
         }
+
+        return $this->next_id_card;
     }
     /********************************************************/
 

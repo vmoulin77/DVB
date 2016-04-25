@@ -210,7 +210,8 @@ class Card extends MY_Model
         }
 
         $this->set_version_when_deleted($version);
-        return $this;
+        
+        return $this->version_when_deleted;
     }
 
     public function with_card_contents_history() {
@@ -239,6 +240,12 @@ class Card extends MY_Model
         }
 
         $this->set_card_contents_history($card_contents_history);
+
+        return $this->card_contents_history;
+    }
+
+    public function with_card_content_version() {
+        return $this->card_content->with_version();
     }
     /********************************************************/
 

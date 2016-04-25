@@ -5,6 +5,7 @@ class Finder_manager
 {
     private $CI;
     private $model;
+    private $id = null;
     private $stack = array();
     private $with = array();
 
@@ -15,7 +16,11 @@ class Finder_manager
     public function model($model) {
         $this->CI->load->model($model);
         $this->model = $model;
+        return $this;
+    }
 
+    public function id($id) {
+        $this->id = $id;
         return $this;
     }
 
@@ -24,13 +29,16 @@ class Finder_manager
             'method'  => $method,
             'args'    => $args
         );
-
         return $this;
     }
 
     public function with($with) {
-        $this->with[] = $with;
-
+        if (is_array($with)) {
+            $this->with = array_merge($this->with, $with);
+        } else {
+            $this->with[] = $with;
+        }
+        
         return $this;
     }
 
@@ -43,20 +51,46 @@ class Finder_manager
     }
 
     public function complete_query() {
+        if ($this->id !== null) {
+            $this->CI->db->where(model_table($this->model) . '.id', $this->id);
+        }
+
         foreach ($this->stack as $item) {
             call_user_func_array(array($this->CI->db, $item['method']), $item['args']);
         }
     }
 
-    public function exec_withers(&$data) {
-        if (is_object($data)) {
-            $this->exec_withers(array($data));
+    private function exec_withers_recursive($data, $with) {
+        if ($data === null) {
+            return;
         }
 
-        foreach ($data as &$item) {
-            foreach ($this->with as $with) {
-                call_user_func_array(array($item, 'with_' . $with), array());
+        if ( ! is_array($data)) {
+            $data = array($data);
+        }
+
+        if ( ! is_array($with)) {
+            $with = array($with);
+        }
+
+        foreach ($data as $data_item) {
+            foreach ($with as $with_key => $with_value) {
+                if (is_string($with_key)) {
+                    $this->exec_withers_recursive(call_user_func_array(array($data_item, 'with_' . $with_key), array()), $with_value);
+                } else {
+                    if ( ! is_array($with_value)) {
+                        $with_value = array($with_value);
+                    }
+
+                    foreach ($with_value as $with_item) {
+                        call_user_func_array(array($data_item, 'with_' . $with_item), array());
+                    }
+                }
             }
         }
+    }
+
+    public function exec_withers($data) {
+        $this->exec_withers_recursive($data, $this->with);
     }
 }

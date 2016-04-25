@@ -7,10 +7,8 @@ class MY_Model extends CI_Model
         if ($filter instanceof utils\finder\Finder_manager) {
             $finder_manager = $filter;
         } else {
-            $table = isset(static::$table) ? static::$table : strtolower(get_called_class());
-            
             $finder_manager = new utils\finder\Finder_manager();
-            $finder_manager->where($table . '.id', (int) $filter);
+            $finder_manager->where(model_table(get_called_class()) . '.id', (int) $filter);
         }
 
         $all = static::find_all($finder_manager);
