@@ -52,7 +52,7 @@ class Finder_manager
 
     public function complete_query() {
         if ($this->id !== null) {
-            $this->CI->db->where(model_table($this->model) . '.id', $this->id);
+            $this->CI->db->where(model_to_table($this->model) . '.id', $this->id);
         }
 
         foreach ($this->stack as $item) {
