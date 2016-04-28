@@ -1,5 +1,5 @@
 <?php
-namespace utils\finder;
+namespace utils\crud;
 
 class Finder_manager
 {
@@ -9,14 +9,10 @@ class Finder_manager
     private $stack = array();
     private $with = array();
 
-    public function __construct() {
+    public function __construct($model) {
         $this->CI =& get_instance();
-    }
-
-    public function model($model) {
         $this->CI->load->model($model);
         $this->model = $model;
-        return $this;
     }
 
     public function id($id) {

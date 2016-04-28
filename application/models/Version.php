@@ -95,11 +95,11 @@ class Version extends MY_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find_all(utils\finder\Finder_manager $finder_manager = null) {
+    public static function find_all(utils\crud\Finder_manager $finder_manager = null) {
         $CI = get_instance();
 
         if ($finder_manager === null) {
-            $finder_manager = new utils\finder\Finder_manager();
+            $finder_manager = new utils\crud\Finder_manager(get_class());
         }
 
         $CI->db->select('id, database_version, app_version_code, app_version_name, created_at')

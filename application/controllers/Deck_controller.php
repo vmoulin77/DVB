@@ -121,9 +121,8 @@ class Deck_controller extends CI_Controller
     public function view_all() {
         //$this->output->enable_profiler(true);
 
-        $finder_manager = new utils\finder\Finder_manager();
-        $finder_manager->model('Deck')
-                       ->order_by('id', 'asc')
+        $finder_manager = new utils\crud\Finder_manager('Deck');
+        $finder_manager->order_by('id', 'asc')
                        ->with('version_when_created');
         $decks = $finder_manager->find_all();
 

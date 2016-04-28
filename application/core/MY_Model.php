@@ -4,11 +4,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class MY_Model extends CI_Model
 {
     public static function find($filter) {
-        if ($filter instanceof utils\finder\Finder_manager) {
+        if ($filter instanceof utils\crud\Finder_manager) {
             $finder_manager = $filter;
         } else {
-            $finder_manager = new utils\finder\Finder_manager();
-            $finder_manager->where(model_to_table(get_called_class()) . '.id', (int) $filter);
+            $finder_manager = new utils\crud\Finder_manager(get_called_class());
+            $finder_manager->id($filter);
         }
 
         $all = static::find_all($finder_manager);

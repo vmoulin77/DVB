@@ -120,8 +120,7 @@ class Campaign_controller extends CI_Controller
     }
 
     public function view_all() {
-        $finder_manager = new utils\finder\Finder_manager();
-        $finder_manager->model('Campaign');
+        $finder_manager = new utils\crud\Finder_manager('Campaign');
         $finder_manager->with('next_id_card');
         $campaigns = $finder_manager->find_all();
 
