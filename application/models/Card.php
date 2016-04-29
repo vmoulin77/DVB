@@ -97,7 +97,7 @@ class Card extends MY_Model
             $finder_manager = new utils\crud\Finder_manager(get_class());
         }
 
-        $CI->db->select('card.id as card_id, card.num, card.is_deleted, card_content.id as card_content_id')
+        $CI->db->select('card.id as card_id, card.num, card.is_deleted, card_content.id as card_content_id, card_content.word_english, card_content.word_french, card_content.is_active_english, card_content.is_active_french')
                ->from('card')
                ->join('card_content', 'card_content.id_card = card.id')
                ->where('card_content.is_last', true);
@@ -109,14 +109,21 @@ class Card extends MY_Model
         $retour = array();
 
         foreach ($query->result() as $row) {
-            $card = self::make(
-                (int) $row->card_id,
-                (int) $row->num,
-                Card_content::find($row->card_content_id),
-                (bool) $row->is_deleted
+            $card_content = Card_content::make(
+                (int) $row->card_content_id,
+                $row->word_english,
+                $row->word_french,
+                (bool) $row->is_active_english,
+                (bool) $row->is_active_french,
+                true
             );
 
-            $retour[] = $card;
+            $retour[] = self::make(
+                (int) $row->card_id,
+                (int) $row->num,
+                $card_content,
+                (bool) $row->is_deleted
+            );
         }
 
         $finder_manager->exec_withers($retour);
@@ -131,10 +138,10 @@ class Card extends MY_Model
 
         $retour = array();
 
-        $CI->db->select('card.id as card_id, card.num, card.is_deleted, card_content.id as card_content_id, card_content.word_english, card_content.word_french, card_content.is_active_english, card_content.is_active_french');
-        $CI->db->from('card');
-        $CI->db->join('card_content', 'card.id = card_content.id_card');
-        $CI->db->where('card_content.is_last', true);
+        $CI->db->select('card.id as card_id, card.num, card.is_deleted, card_content.id as card_content_id, card_content.word_english, card_content.word_french, card_content.is_active_english, card_content.is_active_french')
+               ->from('card')
+               ->join('card_content', 'card_content.id_card = card.id')
+               ->where('card_content.is_last', true);
 
         if ($state === 'deleted') {
             $CI->db->where('card.is_deleted', true);
