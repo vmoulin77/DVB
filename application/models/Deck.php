@@ -99,12 +99,10 @@ class Deck extends MY_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find_all(utils\crud\Finder_manager $finder_manager = null) {
+    public static function find($filter = null) {
         $CI = get_instance();
 
-        if ($finder_manager === null) {
-            $finder_manager = new utils\crud\Finder_manager(get_class());
-        }
+        $finder_manager = init_finder_manager(__CLASS__, __METHOD__, $filter);
 
         $CI->db->select('id, num, name')
                ->from('deck');
@@ -125,9 +123,53 @@ class Deck extends MY_Model
             $retour[] = $deck;
         }
 
-        $finder_manager->exec_withers($retour);
+        return $finder_manager->format_return($retour);
+    }
 
-        return $retour;
+    public static function find_with_version_when_created($filter = null) {
+        $CI = get_instance();
+
+        $CI->load->model('Version');
+
+        $finder_manager = init_finder_manager(__CLASS__, __METHOD__, $filter);
+
+        $current_version = Version::find_current_version();
+
+        $CI->db->select('deck.id as deck_id, deck.num, deck.name, version.id as version_id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
+               ->from('deck')
+               ->join('version', 'version.id = deck.id_version_when_created');
+
+        $finder_manager->complete_query();
+
+        $query = $CI->db->get();
+
+        $retour = array();
+
+        foreach ($query->result() as $row) {
+            if ($row->version_id == $current_version->get_id()) {
+                $version_when_created = $current_version;
+            } else {
+                $version_when_created = Version::make(
+                    (int) $row->version_id,
+                    (int) $row->database_version,
+                    (int) $row->app_version_code,
+                    $row->app_version_name,
+                    new DateTime($row->created_at)
+                );
+            }
+
+            $deck = self::make(
+                (int) $row->deck_id,
+                (int) $row->num,
+                $row->name
+            );
+
+            $deck->set_version_when_created($version_when_created);
+
+            $retour[] = $deck;
+        }
+
+        return $finder_manager->format_return($retour);
     }
 
     public static function find_all_with_contains_current_card($id_card) {

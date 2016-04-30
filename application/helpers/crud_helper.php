@@ -7,3 +7,20 @@ if ( ! function_exists('model_to_table'))
         return isset($model::$table) ? $model::$table : strtolower($model);
     }
 }
+
+if ( ! function_exists('init_finder_manager'))
+{
+    function init_finder_manager($model, $method, $filter = null) {
+        if ($filter instanceof utils\crud\Finder_manager) {
+            return $filter;
+        }
+
+        $finder_manager = new utils\crud\Finder_manager($model, $method);
+        if ($filter !== null) {
+            $finder_manager->one();
+            $finder_manager->where(model_to_table($model) . '.id', $filter);
+        }
+
+        return $finder_manager;
+    }
+}

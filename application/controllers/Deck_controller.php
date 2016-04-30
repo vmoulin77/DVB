@@ -119,12 +119,11 @@ class Deck_controller extends CI_Controller
     }
 
     public function view_all() {
-        //$this->output->enable_profiler(true);
+        $this->output->enable_profiler(true);
 
-        $finder_manager = new utils\crud\Finder_manager('Deck');
-        $finder_manager->order_by('id', 'asc')
-                       ->with('version_when_created');
-        $decks = $finder_manager->find_all();
+        $finder_manager = new utils\crud\Finder_manager('Deck', 'find_with_version_when_created');
+        $finder_manager->order_by('deck.id', 'asc');
+        $decks = $finder_manager->get();
 
         $this->layout->add_basic_assets()
                      ->menu()

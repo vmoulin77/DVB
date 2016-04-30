@@ -250,10 +250,6 @@ class Card extends MY_Model
 
         return $this->card_contents_history;
     }
-
-    public function with_card_content_version() {
-        return $this->card_content->with_version();
-    }
     /********************************************************/
 
     /********************************************************/
