@@ -11,8 +11,14 @@ class Card extends MY_Model
     private $card_moves = array();
     private $card_contents_history = array();
     private $review_records = array();
-    
-    public static function make($id, $num, $card_content, $is_deleted) {
+
+    public static function make($id, $num, Card_content $card_content, $is_deleted, $make_type = MAKE_STANDARD) {
+        if ($make_type === MAKE_STR_DB) {
+            $id = (int) $id;
+            $num = (int) $num;
+            $is_deleted = (int) $is_deleted;
+        }
+
         $retour = new self();
 
         $retour->id = $id;
@@ -88,14 +94,12 @@ class Card extends MY_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find_all(utils\crud\Finder_manager $finder_manager = null) {
+    public static function find($filter = null) {
         $CI = get_instance();
 
         $CI->load->model('Card_content');
 
-        if ($finder_manager === null) {
-            $finder_manager = new utils\crud\Finder_manager(get_class());
-        }
+        $finder_manager = init_finder_manager(__CLASS__, __METHOD__, $filter);
 
         $CI->db->select('card.id as card_id, card.num, card.is_deleted, card_content.id as card_content_id, card_content.word_english, card_content.word_french, card_content.is_active_english, card_content.is_active_french')
                ->from('card')
@@ -110,25 +114,25 @@ class Card extends MY_Model
 
         foreach ($query->result() as $row) {
             $card_content = Card_content::make(
-                (int) $row->card_content_id,
+                $row->card_content_id,
                 $row->word_english,
                 $row->word_french,
-                (bool) $row->is_active_english,
-                (bool) $row->is_active_french,
-                true
+                $row->is_active_english,
+                $row->is_active_french,
+                STR_DB_BOOL_TRUE,
+                MAKE_STR_DB
             );
 
             $retour[] = self::make(
-                (int) $row->card_id,
-                (int) $row->num,
+                $row->card_id,
+                $row->num,
                 $card_content,
-                (bool) $row->is_deleted
+                $row->is_deleted,
+                MAKE_STR_DB
             );
         }
 
-        $finder_manager->exec_withers($retour);
-
-        return $retour;
+        return $finder_manager->format_return($retour);
     }
 
     public static function find_searched_cards($searched_str, $is_case_sensitive, $language, $state) {
@@ -160,18 +164,20 @@ class Card extends MY_Model
                 || ($search_in_fr && self::str_match($searched_str, $row->word_french, $is_case_sensitive))
             ) {
                 $card_content = Card_content::make(
-                    (int) $row->card_content_id,
+                    $row->card_content_id,
                     $row->word_english,
                     $row->word_french,
-                    (bool) $row->is_active_english,
-                    (bool) $row->is_active_french,
-                    true
+                    $row->is_active_english,
+                    $row->is_active_french,
+                    STR_DB_BOOL_TRUE,
+                    MAKE_STR_DB
                 );
                 $retour[] = self::make(
-                    (int) $row->card_id,
-                    (int) $row->num,
+                    $row->card_id,
+                    $row->num,
                     $card_content,
-                    (bool) $row->is_deleted
+                    $row->is_deleted,
+                    MAKE_STR_DB
                 );
             }
         }
@@ -187,8 +193,6 @@ class Card extends MY_Model
         $this->load->model('Version');
 
         if ($this->is_deleted) {
-            $current_version = Version::find_current_version();
-
             $this->db->select('version.id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
                      ->from('card')
                      ->join('version', 'version.id = card.id_version_when_deleted')
@@ -198,19 +202,16 @@ class Card extends MY_Model
             $row = $query->row();
 
             if ($query->num_rows() == 1) {
-                if ($row->id == $current_version->get_id()) {
-                    $version = $current_version;
-                } else {
-                    $version = Version::make(
-                        (int) $row->id,
-                        (int) $row->database_version,
-                        (int) $row->app_version_code,
-                        $row->app_version_name,
-                        new DateTime($row->created_at)
-                    );
-                }
+                $version = Version::make(
+                    $row->id,
+                    $row->database_version,
+                    $row->app_version_code,
+                    $row->app_version_name,
+                    $row->created_at,
+                    MAKE_STR_DB
+                );
             } else {
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
         } else {
             $version = null;
@@ -235,12 +236,13 @@ class Card extends MY_Model
 
         foreach ($query->result() as $row) {
             $card_content = Card_content::make(
-                (int) $row->card_content_id,
+                $row->card_content_id,
                 $row->word_english,
                 $row->word_french,
-                (bool) $row->is_active_english,
-                (bool) $row->is_active_french,
-                (bool) $row->is_last
+                $row->is_active_english,
+                $row->is_active_french,
+                $row->is_last,
+                MAKE_STR_DB
             );
 
             $card_contents_history[] = $card_content;
@@ -262,7 +264,7 @@ class Card extends MY_Model
 
         if ( ! self::num_is_free($num)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error('INSERT_ERROR', 'The card number is not free.');
+            return new utils\errors\DVB_error('INSERT_ERROR', 'The card number is not free.');
         }
 
         $data = array(
@@ -274,7 +276,7 @@ class Card extends MY_Model
             $id = $CI->db->insert_id();
         } else {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error();
+            return new utils\errors\DVB_error();
         }
 
         $data = array(
@@ -290,7 +292,7 @@ class Card extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error();
+            return new utils\errors\DVB_error();
         }
     }
 
@@ -301,7 +303,7 @@ class Card extends MY_Model
 
         if (self::card_is_deleted($id)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error('UPDATE_ERROR', 'The card has been deleted.');
+            return new utils\errors\DVB_error('UPDATE_ERROR', 'The card has been deleted.');
         }
 
         if ($id_campaign !== null) {
@@ -310,17 +312,17 @@ class Card extends MY_Model
 
             if (Campaign::campaign_is_deleted($id_campaign)) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error('UPDATE_ERROR', 'The campaign has been deleted.');
+                return new utils\errors\DVB_error('UPDATE_ERROR', 'The campaign has been deleted.');
             }
 
             if (Review_record::review_record_is_deleted($id_campaign, $id)) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error('UPDATE_ERROR', "The review record doesn't exist anymore.");
+                return new utils\errors\DVB_error('UPDATE_ERROR', "The review record doesn't exist anymore.");
             }
 
             if (Review_record::review_record_is_done($id_campaign, $id)) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error('UPDATE_ERROR', 'The card has already been reviewed.');
+                return new utils\errors\DVB_error('UPDATE_ERROR', 'The card has already been reviewed.');
             }
 
             $CI->db->set('is_done', true)
@@ -328,7 +330,7 @@ class Card extends MY_Model
                    ->where('id_card', $id);
             if ( ! $CI->db->update('campaign_card')) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
         }
 
@@ -342,11 +344,11 @@ class Card extends MY_Model
                        ->where('id', $id);
                 if ( ! $CI->db->update('card')) {
                     $CI->transaction->set_as_rollback();
-                    return new utils\errors\DVB_Error();
+                    return new utils\errors\DVB_error();
                 }
             } else {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error('UPDATE_ERROR', 'The card number is not free.');
+                return new utils\errors\DVB_error('UPDATE_ERROR', 'The card number is not free.');
             }
         }
         
@@ -367,14 +369,14 @@ class Card extends MY_Model
                 return true;
             } else {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
         } else {
             $CI->db->set(array('is_last' => false))
                    ->where('id', $card->get_card_content()->get_id());
             if ( ! $CI->db->update('card_content')) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
 
             $data_card_content['is_last']     = true;
@@ -385,7 +387,7 @@ class Card extends MY_Model
                 return true;
             } else {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
         }
     }
@@ -399,7 +401,7 @@ class Card extends MY_Model
 
         if (self::card_is_deleted($id)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error('DELETE_ERROR', 'The card has already been deleted.');
+            return new utils\errors\DVB_error('DELETE_ERROR', 'The card has already been deleted.');
         }
 
         if (self::never_versioned($id)) {
@@ -408,7 +410,7 @@ class Card extends MY_Model
                 return true;
             } else {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
         } else {
             $current_version = Version::find_current_version();
@@ -417,7 +419,7 @@ class Card extends MY_Model
             $CI->db->where('id_card', $id);
             if ( ! $CI->db->delete('campaign_card')) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
             /********************************************************/
 
@@ -438,24 +440,26 @@ class Card extends MY_Model
                    ->where('type', 'add');
             if ( ! $CI->db->delete('card_deck_version')) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
 
             foreach ($ids_decks as $id_deck) {
                 if ( ! Card_move::set_last_move($id, $id_deck, true)) {
                     $CI->transaction->set_as_rollback();
-                    return new utils\errors\DVB_Error();
+                    return new utils\errors\DVB_error();
                 }
             }
             /********************************************************/
 
             /********************************************************/
-            $decks = Deck::find_all_with_contains_current_card($id);
+            $finder_manager = new utils\crud\Finder_manager('Deck', 'find_with_contains_current_card');
+            $finder_manager->add_parameter('id_card', $id);
+            $decks = $finder_manager->get();
             foreach ($decks as $deck) {
                 if ($deck->contains_current_card) {
                     if ( ! Card_move::set_last_move($id, $deck->get_id(), false)) {
                         $CI->transaction->set_as_rollback();
-                        return new utils\errors\DVB_Error();
+                        return new utils\errors\DVB_error();
                     }
 
                     $data = array(
@@ -467,7 +471,7 @@ class Card extends MY_Model
                     );
                     if ( ! $CI->db->insert('card_deck_version', $data)) {
                         $CI->transaction->set_as_rollback();
-                        return new utils\errors\DVB_Error();
+                        return new utils\errors\DVB_error();
                     }
                 }
             }
@@ -477,7 +481,7 @@ class Card extends MY_Model
                    ->where('id_version', $current_version->get_id());
             if ( ! $CI->db->delete('card_content')) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
 
             $CI->db->select('id')
@@ -489,7 +493,7 @@ class Card extends MY_Model
 
             if ($query->num_rows() == 0) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             } else {
                 $row = $query->row();
 
@@ -497,7 +501,7 @@ class Card extends MY_Model
                        ->where('id', $row->id);
                 if ( ! $CI->db->update('card_content')) {
                     $CI->transaction->set_as_rollback();
-                    return new utils\errors\DVB_Error();
+                    return new utils\errors\DVB_error();
                 }
             }
 
@@ -512,7 +516,7 @@ class Card extends MY_Model
                 return true;
             } else {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_Error();
+                return new utils\errors\DVB_error();
             }
         }
     }

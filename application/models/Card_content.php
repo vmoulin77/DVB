@@ -12,7 +12,16 @@ class Card_content extends MY_Model
     private $card;
     private $version;
 
-    public static function make($id, $word_english, $word_french, $is_active_english, $is_active_french, $is_last) {
+    public static function make($id, $word_english, $word_french, $is_active_english, $is_active_french, $is_last, $make_type = MAKE_STANDARD) {
+        if ($make_type === MAKE_STR_DB) {
+            $id = (int) $id;
+            // $word_english = $word_english;
+            // $word_french = $word_french;
+            $is_active_english = (bool) $is_active_english;
+            $is_active_french = (bool) $is_active_french;
+            $is_last = (bool) $is_last;
+        }
+
         $retour = new self();
 
         $retour->id = $id;
@@ -88,12 +97,10 @@ class Card_content extends MY_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find_all(utils\crud\Finder_manager $finder_manager = null) {
+    public static function find($filter = null) {
         $CI = get_instance();
 
-        if ($finder_manager === null) {
-            $finder_manager = new utils\crud\Finder_manager(get_class());
-        }
+        $finder_manager = init_finder_manager(__CLASS__, __METHOD__, $filter);
 
         $CI->db->select('id, word_english, word_french, is_active_english, is_active_french, is_last')
                ->from('card_content');
@@ -105,25 +112,18 @@ class Card_content extends MY_Model
         $retour = array();
 
         foreach ($query->result() as $row) {
-            $card_content_is_active_english  = (bool) $row->is_active_english;
-            $card_content_is_active_french   = (bool) $row->is_active_french;
-            $card_content_is_last            = (bool) $row->is_last;
-
-            $card_content = self::make(
-                (int) $row->id,
+            $retour[] = self::make(
+                $row->id,
                 $row->word_english,
                 $row->word_french,
-                $card_content_is_active_english,
-                $card_content_is_active_french,
-                $card_content_is_last
+                $row->is_active_english,
+                $row->is_active_french,
+                $row->is_last,
+                MAKE_STR_DB
             );
-
-            $retour[] = $card_content;
         }
 
-        $finder_manager->exec_withers($retour);
-
-        return $retour;
+        return $finder_manager->format_return($retour);
     }
     /********************************************************/
 
@@ -133,34 +133,30 @@ class Card_content extends MY_Model
     public function with_version() {
         $this->load->model('Version');
 
-        $current_version = Version::find_current_version();
-
         $this->db->select('version.id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
                  ->from('card_content')
                  ->join('version', 'version.id = card_content.id_version')
                  ->where('card_content.id', $this->id);
+
         $query = $this->db->get();
 
         if ($query->num_rows() == 1) {
             $row = $query->row();
 
-            if ($row->id == $current_version->get_id()) {
-                $this->set_version($current_version);
-            } else {
-                $version = Version::make(
-                    (int) $row->id,
-                    (int) $row->database_version,
-                    (int) $row->app_version_code,
-                    $row->app_version_name,
-                    new DateTime($row->created_at)
-                );
+            $version = Version::make(
+                $row->id,
+                $row->database_version,
+                $row->app_version_code,
+                $row->app_version_name,
+                $row->created_at,
+                MAKE_STR_DB
+            );
 
-                $this->set_version($version);
-            }
+            $this->set_version($version);
 
             return $this->version;
         } else {
-            return new utils\errors\DVB_Error();
+            return new utils\errors\DVB_error();
         }
     }
     /********************************************************/

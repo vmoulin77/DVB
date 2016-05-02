@@ -16,7 +16,7 @@ class Card_move_controller extends CI_Controller
 
         if ($result === true) {
             $ajax_response = new utils\ajax\responses\Standard('OK', 'Your request has been processed.');
-        } elseif ($result instanceof  utils\errors\DVB_Error) {
+        } elseif ($result instanceof  utils\errors\DVB_error) {
             $ajax_response = new utils\ajax\responses\Standard('NOK', $result->message);
         }
         echo $ajax_response->produce();

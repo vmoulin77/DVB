@@ -46,7 +46,7 @@ class Card_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_Error) {
+            } elseif ($result instanceof utils\errors\DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
                 
                 $data = array(
@@ -118,7 +118,7 @@ class Card_controller extends CI_Controller
                         redirect('/Card/edit/' . $campaign->next_id_card . '/' . $id_campaign);
                     }
                 }
-            } elseif ($result instanceof utils\errors\DVB_Error) {
+            } elseif ($result instanceof utils\errors\DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -145,7 +145,7 @@ class Card_controller extends CI_Controller
 
         if ($result === true) {
             redirect('/Card/search');
-        } elseif ($result instanceof utils\errors\DVB_Error) {
+        } elseif ($result instanceof utils\errors\DVB_error) {
             $this->layout->add_basic_assets()
                          ->menu()
                          ->view('others/form_failure', array('message' => $result->message));
@@ -181,19 +181,21 @@ class Card_controller extends CI_Controller
         $id = (int) $id;
 
         $this->load->model('Card');
-        $this->load->model('Deck');
 
         $data['id'] = $id;
 
         $card = Card::find($id);
         $card->with_version_when_deleted();
         $card->with_card_contents_history();
-        foreach ($card->get_card_contents_history() as &$card_content) {
+        foreach ($card->get_card_contents_history() as $card_content) {
             $card_content->with_version();
         }
         $data['card'] = $card;
 
-        $decks = Deck::find_all_with_contains_current_card($id);
+        $finder_manager = new utils\crud\Finder_manager('Deck', 'find_with_contains_current_card');
+        $finder_manager->add_parameter('id_card', $id);
+        $decks = $finder_manager->get();
+
         $data['decks'] = $decks;
 
         $this->layout->add_basic_assets()

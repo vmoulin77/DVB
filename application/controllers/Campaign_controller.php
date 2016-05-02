@@ -39,7 +39,7 @@ class Campaign_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_Error) {
+            } elseif ($result instanceof utils\errors\DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -89,7 +89,7 @@ class Campaign_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_Error) {
+            } elseif ($result instanceof utils\errors\DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -112,7 +112,7 @@ class Campaign_controller extends CI_Controller
 
         if ($result === true) {
             redirect('/Campaign/view_all');
-        } elseif ($result instanceof utils\errors\DVB_Error) {
+        } elseif ($result instanceof utils\errors\DVB_error) {
             $this->layout->add_basic_assets()
                          ->menu()
                          ->view('others/form_failure', array('message' => $result->message));
@@ -120,9 +120,13 @@ class Campaign_controller extends CI_Controller
     }
 
     public function view_all() {
-        $finder_manager = new utils\crud\Finder_manager('Campaign');
-        $finder_manager->with('next_id_card');
-        $campaigns = $finder_manager->find_all();
+        $this->load->model('Campaign');
+
+        $campaigns = Campaign::find();
+
+        foreach ($campaigns as $campaign) {
+            $campaign->with_next_id_card();
+        }
 
         $this->layout->add_basic_assets()
                      ->menu()

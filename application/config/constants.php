@@ -83,3 +83,19 @@ defined('EXIT_USER_INPUT')     OR define('EXIT_USER_INPUT', 7); // invalid user 
 defined('EXIT_DATABASE')       OR define('EXIT_DATABASE', 8); // database error
 defined('EXIT__AUTO_MIN')      OR define('EXIT__AUTO_MIN', 9); // lowest automatically-assigned error code
 defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest automatically-assigned error code
+
+
+
+/*
+|--------------------------------------------------------------------------
+| My own constants
+|--------------------------------------------------------------------------
+*/
+define('STR_DB_BOOL_FALSE',  '0');
+define('STR_DB_BOOL_TRUE',   '1');
+
+define('FIND_ONE',   0);
+define('FIND_MANY',  1);
+
+define('MAKE_STANDARD',  0);
+define('MAKE_STR_DB',    1);

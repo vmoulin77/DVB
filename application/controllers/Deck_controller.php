@@ -37,7 +37,7 @@ class Deck_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_Error) {
+            } elseif ($result instanceof utils\errors\DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -88,7 +88,7 @@ class Deck_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_Error) {
+            } elseif ($result instanceof utils\errors\DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -111,7 +111,7 @@ class Deck_controller extends CI_Controller
 
         if ($result === true) {
             redirect('/Deck/view_all');
-        } elseif ($result instanceof utils\errors\DVB_Error) {
+        } elseif ($result instanceof utils\errors\DVB_error) {
             $this->layout->add_basic_assets()
                          ->menu()
                          ->view('others/form_failure', array('message' => $result->message));

@@ -20,7 +20,7 @@ if ( ! function_exists('set_value'))
         $CI =& get_instance();
 
         if (is_bool($default)) {
-            $default = $default ? '1' : '0';
+            $default = $default ? STR_DB_BOOL_TRUE : STR_DB_BOOL_FALSE;
         }
 
         $value = (isset($CI->form_validation) && is_object($CI->form_validation) && $CI->form_validation->has_rule($field))

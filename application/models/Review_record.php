@@ -9,7 +9,13 @@ class Review_record extends MY_Model
     private $campaign;
     private $card;
     
-    public static function make($is_done, $card_is_modified, $review_date) {
+    public static function make($is_done, $card_is_modified, $review_date, $make_type = MAKE_STANDARD) {
+        if ($make_type === MAKE_STR_DB) {
+            $is_done = (bool) $is_done;
+            $card_is_modified = (bool) $card_is_modified;
+            $review_date = new DateTime($review_date);
+        }
+
         $retour = new self();
 
         $retour->is_done = $is_done;
@@ -97,7 +103,7 @@ class Review_record extends MY_Model
 
         $query = $CI->db->get();
         if ($query->num_rows() == 0) {
-            return new utils\errors\DVB_Error('ERROR', "The review record doesn't exist anymore.");
+            return new utils\errors\DVB_error('ERROR', "The review record doesn't exist anymore.");
         }
 
         $row = $query->row();

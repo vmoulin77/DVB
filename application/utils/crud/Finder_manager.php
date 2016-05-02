@@ -3,16 +3,14 @@ namespace utils\crud;
 
 class Finder_manager
 {
-    const TYPE_ONE   = 'one';
-    const TYPE_MANY  = 'many';
-
     private $CI;
     private $model;
     private $method;
     private $type;
+    private $parameters = array();
     private $stack = array();
 
-    public function __construct($model, $method, $type = self::TYPE_MANY) {
+    public function __construct($model, $method, $type = FIND_MANY) {
         $this->CI =& get_instance();
         $this->CI->load->model($model);
 
@@ -22,11 +20,11 @@ class Finder_manager
     }
 
     public function one() {
-        $this->type = self::TYPE_ONE;
+        $this->type = FIND_ONE;
     }
 
     public function many() {
-        $this->type = self::TYPE_MANY;
+        $this->type = FIND_MANY;
     }
 
     public function __call($method, $args) {
@@ -35,6 +33,38 @@ class Finder_manager
             'args'    => $args
         );
         return $this;
+    }
+
+    public function get_parameters() {
+        return $this->parameters;
+    }
+
+    public function set_parameters($parameters) {
+        $this->parameters = $parameters;
+    }
+
+    public function get_parameter($parameter) {
+        return $this->parameters[$parameter];
+    }
+
+    public function add_parameter($parameter, $value) {
+        $this->parameters[$parameter] = $value;
+    }
+
+    public function add_parameters($parameters) {
+        $this->parameters = array_merge($this->parameters, $parameters);
+    }
+
+    public function remove_parameter($parameter) {
+        unset($this->parameters[$parameter]);
+    }
+
+    public function check_parameters($parameters) {
+        if (empty(array_diff($parameters, array_keys($this->parameters)))) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function get() {
@@ -48,7 +78,7 @@ class Finder_manager
     }
 
     public function format_return($retour) {
-        if ($this->type == self::TYPE_ONE) {
+        if ($this->type == FIND_ONE) {
             switch (count($retour)) {
                 case 0:
                     return null;

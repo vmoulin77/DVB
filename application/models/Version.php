@@ -13,7 +13,15 @@ class Version extends MY_Model
     private $deleted_cards = array();
     private $card_moves = array();
 
-    public static function make($id, $database_version, $app_version_code, $app_version_name, $created_at) {
+    public static function make($id, $database_version, $app_version_code, $app_version_name, $created_at, $make_type = MAKE_STANDARD) {
+        if ($make_type === MAKE_STR_DB) {
+            $id = (int) $id;
+            $database_version = ($database_version == '') ? null : (int) $database_version;
+            $app_version_code = ($app_version_code == '') ? null : (int) $app_version_code;
+            $app_version_name = ($app_version_name == '') ? null : (int) $app_version_name;
+            $created_at = ($created_at === '') ? null : new DateTime($created_at);
+        }
+
         $retour = new self();
 
         $retour->id = $id;
@@ -95,12 +103,10 @@ class Version extends MY_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find_all(utils\crud\Finder_manager $finder_manager = null) {
+    public static function find($filter = null) {
         $CI = get_instance();
 
-        if ($finder_manager === null) {
-            $finder_manager = new utils\crud\Finder_manager(get_class());
-        }
+        $finder_manager = init_finder_manager(__CLASS__, __METHOD__, $filter);
 
         $CI->db->select('id, database_version, app_version_code, app_version_name, created_at')
                ->from('version');
@@ -112,47 +118,38 @@ class Version extends MY_Model
         $retour = array();
 
         foreach ($query->result() as $row) {
-            $version_database_version  = ($row->database_version == '')  ? null : (int) $row->database_version;
-            $version_app_version_code  = ($row->app_version_code == '')  ? null : (int) $row->app_version_code;
-            $version_app_version_name  = ($row->app_version_name == '')  ? null : $row->app_version_name;
-            $version_created_at        = ($row->created_at == '')        ? null : new DateTime($row->created_at);
-
             $version = self::make(
-                (int) $row->id,
-                $version_database_version,
-                $version_app_version_code,
-                $version_app_version_name,
-                $version_created_at
+                $row->id,
+                $row->database_version,
+                $row->app_version_code,
+                $row->app_version_name,
+                $row->created_at,
+                MAKE_STR_DB
             );
 
             $retour[] = $version;
         }
 
-        $finder_manager->exec_withers($retour);
-
-        return $retour;
+        return $finder_manager->format_return($retour);
     }
 
     public static function find_current_version() {
         $CI = get_instance();
 
-        $str_query = "SELECT id, database_version, app_version_code, app_version_name "
+        $str_query = "SELECT id, database_version, app_version_code, app_version_name, created_at "
                    . "FROM version "
                    . "WHERE id = (SELECT MAX(id) FROM version)";
         $query = $CI->db->query($str_query);
 
         $row = $query->row();
 
-        $database_version = ($row->database_version == '') ? null : (int) $row->database_version;
-        $app_version_code = ($row->app_version_code == '') ? null : (int) $row->app_version_code;
-        $app_version_name = ($row->app_version_name == '') ? null : $row->app_version_name;
-
         return self::make(
-            (int) $row->id,
-            $database_version,
-            $app_version_code,
-            $app_version_name,
-            null
+            $row->id,
+            $row->database_version,
+            $row->app_version_code,
+            $row->app_version_name,
+            $row->created_at,
+            MAKE_STR_DB
         );
     }
     /********************************************************/
@@ -220,20 +217,14 @@ class Version extends MY_Model
                 $card_contents[$id_card] = array();
             }
 
-            $id                 = (int) $row->id;
-            $word_english       = $row->word_english;
-            $word_french        = $row->word_french;
-            $is_active_english  = (bool) $row->is_active_english;
-            $is_active_french   = (bool) $row->is_active_french;
-            $is_last            = (bool) $row->is_last;
-
             $card_content = Card_content::make(
-                $id,
-                $word_english,
-                $word_french,
-                $is_active_english,
-                $is_active_french,
-                $is_last
+                $row->id,
+                $row->word_english,
+                $row->word_french,
+                $row->is_active_english,
+                $row->is_active_french,
+                $row->is_last,
+                MAKE_STR_DB
             );
 
             $card_content->id_version = $id_version;

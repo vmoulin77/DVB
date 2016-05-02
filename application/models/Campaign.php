@@ -8,7 +8,13 @@ class Campaign extends MY_Model
 
     private $review_records = array();
     
-    public static function make($id, $name, $created_at) {
+    public static function make($id, $name, $created_at, $make_type = MAKE_STANDARD) {
+        if ($make_type === MAKE_STR_DB) {
+            $id = (int) $id;
+            // $name = $name;
+            $created_at = new DateTime($created_at);
+        }
+
         $retour = new self();
 
         $retour->id          = $id;
@@ -46,12 +52,10 @@ class Campaign extends MY_Model
     /********************************************************/
     /*                    The finders                       */
     /********************************************************/
-    public static function find_all(utils\crud\Finder_manager $finder_manager = null) {
+    public static function find($filter = null) {
         $CI = get_instance();
 
-        if ($finder_manager === null) {
-            $finder_manager = new utils\crud\Finder_manager(get_class());
-        }
+        $finder_manager = init_finder_manager(__CLASS__, __METHOD__, $filter);
 
         $CI->db->select('id, name, created_at')
                ->from('campaign');
@@ -63,18 +67,15 @@ class Campaign extends MY_Model
         $retour = array();
 
         foreach ($query->result() as $row) {
-            $campaign = self::make(
-                (int) $row->id,
+            $retour[] = self::make(
+                $row->id,
                 $row->name,
-                new DateTime($row->created_at)
+                $row->created_at,
+                MAKE_STR_DB
             );
-
-            $retour[] = $campaign;
         }
 
-        $finder_manager->exec_withers($retour);
-
-        return $retour;
+        return $finder_manager->format_return($retour);
     }
     /********************************************************/
 
@@ -110,12 +111,12 @@ class Campaign extends MY_Model
 
         if (Deck::deck_is_deleted($id_deck)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error('INSERT_ERROR', "The deck has been deleted.");
+            return new utils\errors\DVB_error('INSERT_ERROR', "The deck has been deleted.");
         }
 
         if (Deck::deck_is_empty($id_deck)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error('INSERT_ERROR', "The deck is empty.");
+            return new utils\errors\DVB_error('INSERT_ERROR', "The deck is empty.");
         }
 
         $now = new DateTime();
@@ -127,7 +128,7 @@ class Campaign extends MY_Model
 
         if ( ! $CI->db->insert('campaign', $data)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error();
+            return new utils\errors\DVB_error();
         }
 
         $id_campaign = $CI->db->insert_id();
@@ -152,7 +153,7 @@ class Campaign extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error();
+            return new utils\errors\DVB_error();
         }
     }
 
@@ -161,7 +162,7 @@ class Campaign extends MY_Model
 
         if (self::campaign_is_deleted($id)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error('UPDATE_ERROR', "The campaign doesn't exist anymore.");
+            return new utils\errors\DVB_error('UPDATE_ERROR', "The campaign doesn't exist anymore.");
         }
 
         $CI->db->set($data)
@@ -171,7 +172,7 @@ class Campaign extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_Error();
+            return new utils\errors\DVB_error();
         }
     }
 
@@ -183,10 +184,10 @@ class Campaign extends MY_Model
             if ($CI->db->affected_rows() == 1) {
                 return true;
             } else {
-                return new utils\errors\DVB_Error('DELETE_ERROR', "The campaign doesn't exist anymore.");
+                return new utils\errors\DVB_error('DELETE_ERROR', "The campaign doesn't exist anymore.");
             }
         } else {
-            return new utils\errors\DVB_Error();
+            return new utils\errors\DVB_error();
         }
     }
     /********************************************************/
