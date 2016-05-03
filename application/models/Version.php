@@ -132,8 +132,12 @@ class Version extends MY_Model
 
         return $finder_manager->format_return($retour);
     }
+    /********************************************************/
 
-    public static function find_current_version() {
+    /********************************************************/
+    /*                   The retrievers                     */
+    /********************************************************/
+    public static function retrieve_current_version() {
         $CI = get_instance();
 
         $str_query = "SELECT id, database_version, app_version_code, app_version_name, created_at "
@@ -169,7 +173,7 @@ class Version extends MY_Model
 
         $now = new DateTime();
 
-        $current_version = self::find_current_version();
+        $current_version = self::retrieve_current_version();
 
         $data = array(
             'database_version'  => $database_version,

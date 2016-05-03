@@ -138,7 +138,7 @@ class Deck extends MY_Model
 
         $finder_manager = init_finder_manager(__CLASS__, __METHOD__, $filter);
 
-        $current_version = Version::find_current_version();
+        $current_version = Version::retrieve_current_version();
 
         $CI->db->select('deck.id as deck_id, deck.num, deck.name, version.id as version_id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
                ->from('deck')
@@ -218,6 +218,11 @@ class Deck extends MY_Model
     /********************************************************/
 
     /********************************************************/
+    /*                   The retrievers                     */
+    /********************************************************/
+    /********************************************************/
+
+    /********************************************************/
     /*                    The withers                       */
     /********************************************************/
     public function with_version_when_created() {
@@ -263,7 +268,7 @@ class Deck extends MY_Model
             return new utils\errors\DVB_error('INSERT_ERROR', "The deck number is not free.");
         }
 
-        $current_version = Version::find_current_version();
+        $current_version = Version::retrieve_current_version();
 
         $data = array(
             'num'                      => $num,

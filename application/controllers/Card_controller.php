@@ -166,7 +166,7 @@ class Card_controller extends CI_Controller
             $language           = ($this->input->post('language') !== null) ? $this->input->post('language') : 'both';
             $state              = ($this->input->post('state') !== null) ? $this->input->post('state') : 'both';
 
-            $searched_cards = Card::find_searched_cards($searched_str, $is_case_sensitive, $language, $state);
+            $searched_cards = Card::retrieve_searched_cards($searched_str, $is_case_sensitive, $language, $state);
             $data['searched_cards'] = $searched_cards;
         }
 

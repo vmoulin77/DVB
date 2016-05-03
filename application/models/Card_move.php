@@ -68,6 +68,11 @@ class Card_move extends MY_Model
     /********************************************************/
 
     /********************************************************/
+    /*                   The retrievers                     */
+    /********************************************************/
+    /********************************************************/
+
+    /********************************************************/
     /*                    The withers                       */
     /********************************************************/
     /********************************************************/
@@ -144,7 +149,7 @@ class Card_move extends MY_Model
             return new utils\errors\DVB_error('MOVE_ERROR', 'The card is already in the deck.');
         }
 
-        $current_version = Version::find_current_version();
+        $current_version = Version::retrieve_current_version();
 
         if (($query->num_rows() == 0)
             || ($row->id_version < $current_version->get_id())

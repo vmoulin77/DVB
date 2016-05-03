@@ -134,8 +134,12 @@ class Card extends MY_Model
 
         return $finder_manager->format_return($retour);
     }
+    /********************************************************/
 
-    public static function find_searched_cards($searched_str, $is_case_sensitive, $language, $state) {
+    /********************************************************/
+    /*                   The retrievers                     */
+    /********************************************************/
+    public static function retrieve_searched_cards($searched_str, $is_case_sensitive, $language, $state) {
         $CI = get_instance();
 
         $CI->load->model('Card_content');
@@ -285,7 +289,7 @@ class Card extends MY_Model
             'is_active_english'  => $is_active_english,
             'is_active_french'   => $is_active_french,
             'is_last'            => true,
-            'id_version'         => Version::find_current_version()->get_id(),
+            'id_version'         => Version::retrieve_current_version()->get_id(),
             'id_card'            => $id,
         );
         if ($CI->db->insert('card_content', $data)) {
@@ -353,7 +357,7 @@ class Card extends MY_Model
         }
         
         $card->get_card_content()->with_version();
-        $current_version = Version::find_current_version();
+        $current_version = Version::retrieve_current_version();
 
         $data_card_content = array(
             'word_english'       => self::convert_word($data['word_english']),
@@ -413,7 +417,7 @@ class Card extends MY_Model
                 return new utils\errors\DVB_error();
             }
         } else {
-            $current_version = Version::find_current_version();
+            $current_version = Version::retrieve_current_version();
 
             /********************************************************/
             $CI->db->where('id_card', $id);
