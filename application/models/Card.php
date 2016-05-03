@@ -219,7 +219,7 @@ class Card extends MY_Model
 
         $this->set_version_when_deleted($version);
         
-        return $this->version_when_deleted;
+        return $this;
     }
 
     public function with_card_contents_history() {
@@ -250,7 +250,7 @@ class Card extends MY_Model
 
         $this->set_card_contents_history($card_contents_history);
 
-        return $this->card_contents_history;
+        return $this;
     }
     /********************************************************/
 
@@ -452,8 +452,12 @@ class Card extends MY_Model
             /********************************************************/
 
             /********************************************************/
-            $finder_manager = new utils\crud\Finder_manager('Deck', 'find_with_contains_current_card');
-            $finder_manager->add_parameter('id_card', $id);
+            $finder_manager = new utils\crud\Finder_manager(
+                'Deck',
+                'find_with_contains_current_card',
+                FIND_MANY,
+                ['id_card' => $id]
+            );
             $decks = $finder_manager->get();
             foreach ($decks as $deck) {
                 if ($deck->contains_current_card) {

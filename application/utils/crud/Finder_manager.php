@@ -7,32 +7,25 @@ class Finder_manager
     private $model;
     private $method;
     private $type;
-    private $parameters = array();
-    private $stack = array();
+    private $parameters;
+    private $stack = [];
 
-    public function __construct($model, $method, $type = FIND_MANY) {
+    public function __construct($model, $method, $type = FIND_MANY, $parameters = []) {
         $this->CI =& get_instance();
         $this->CI->load->model($model);
 
-        $this->model   = $model;
-        $this->method  = $method;
-        $this->type    = $type;
+        $this->model       = $model;
+        $this->method      = $method;
+        $this->type        = $type;
+        $this->parameters  = $parameters;
     }
 
-    public function one() {
-        $this->type = FIND_ONE;
+    public function get_type() {
+        return $this->type;
     }
 
-    public function many() {
-        $this->type = FIND_MANY;
-    }
-
-    public function __call($method, $args) {
-        $this->stack[] = array(
-            'method'  => $method,
-            'args'    => $args
-        );
-        return $this;
+    public function set_type($type) {
+        $this->type = $type;
     }
 
     public function get_parameters() {
@@ -65,6 +58,14 @@ class Finder_manager
         } else {
             return false;
         }
+    }
+
+    public function __call($method, $args) {
+        $this->stack[] = array(
+            'method'  => $method,
+            'args'    => $args
+        );
+        return $this;
     }
 
     public function get() {

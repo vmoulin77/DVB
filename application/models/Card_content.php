@@ -154,7 +154,7 @@ class Card_content extends MY_Model
 
             $this->set_version($version);
 
-            return $this->version;
+            return $this;
         } else {
             return new utils\errors\DVB_error();
         }

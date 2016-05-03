@@ -246,7 +246,7 @@ class Deck extends MY_Model
 
         $this->set_version_when_created($version_when_created);
         
-        return $this->version_when_created;
+        return $this;
     }
     /********************************************************/
 

@@ -185,15 +185,19 @@ class Card_controller extends CI_Controller
         $data['id'] = $id;
 
         $card = Card::find($id);
-        $card->with_version_when_deleted();
-        $card->with_card_contents_history();
+        $card->with_version_when_deleted()
+             ->with_card_contents_history();
         foreach ($card->get_card_contents_history() as $card_content) {
             $card_content->with_version();
         }
         $data['card'] = $card;
 
-        $finder_manager = new utils\crud\Finder_manager('Deck', 'find_with_contains_current_card');
-        $finder_manager->add_parameter('id_card', $id);
+        $finder_manager = new utils\crud\Finder_manager(
+            'Deck',
+            'find_with_contains_current_card',
+            FIND_MANY,
+            ['id_card' => $id]
+        );
         $decks = $finder_manager->get();
 
         $data['decks'] = $decks;

@@ -17,7 +17,7 @@ if ( ! function_exists('init_finder_manager'))
 
         $finder_manager = new utils\crud\Finder_manager($model, $method);
         if ($filter !== null) {
-            $finder_manager->one();
+            $finder_manager->set_type(FIND_ONE);
             $finder_manager->where(model_to_table($model) . '.id', $filter);
         }
 
