@@ -53,10 +53,8 @@ class Finder_manager
     }
 
     public function check_parameters($parameters) {
-        if (empty(array_diff($parameters, array_keys($this->parameters)))) {
-            return true;
-        } else {
-            return false;
+        if ( ! empty(array_diff($parameters, array_keys($this->parameters)))) {
+            trigger_error('A finder parameter is missing for ' . $this->model . '::' . $this->method . '()', E_USER_ERROR);
         }
     }
 

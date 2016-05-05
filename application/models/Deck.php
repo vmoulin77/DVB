@@ -191,9 +191,7 @@ class Deck extends MY_Model
 
         $parameters = ['id_card'];
 
-        if ( ! $finder_manager->check_parameters($parameters)) {
-            return new utils\errors\Finder_param_error();
-        }
+        $finder_manager->check_parameters($parameters);
 
         $id_card = $finder_manager->get_parameter('id_card');
 
