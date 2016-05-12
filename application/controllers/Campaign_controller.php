@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use utils\errors\DVB_error;
+
 class Campaign_controller extends CI_Controller
 {
     public function index() {
@@ -19,7 +21,7 @@ class Campaign_controller extends CI_Controller
         $this->layout->add_basic_assets()
                      ->menu();
 
-        $decks = Deck::find_all();
+        $decks = Deck::find();
 
         if ($this->form_validation->run() === false) {
             $data = array(
@@ -39,7 +41,7 @@ class Campaign_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_error) {
+            } elseif ($result instanceof DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -89,7 +91,7 @@ class Campaign_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_error) {
+            } elseif ($result instanceof DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -112,7 +114,7 @@ class Campaign_controller extends CI_Controller
 
         if ($result === true) {
             redirect('/Campaign/view_all');
-        } elseif ($result instanceof utils\errors\DVB_error) {
+        } elseif ($result instanceof DVB_error) {
             $this->layout->add_basic_assets()
                          ->menu()
                          ->view('others/form_failure', array('message' => $result->message));

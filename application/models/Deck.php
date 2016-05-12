@@ -1,5 +1,8 @@
 <?php
 
+use utils\errors\DVB_error;
+use utils\crud\Finder_manager;
+
 class Deck extends MY_Model
 {
     private $id;
@@ -186,7 +189,7 @@ class Deck extends MY_Model
     * @param $finder_manager
     * @return The deck(s)
     */
-    public static function find_with_contains_current_card(utils\crud\Finder_manager $finder_manager) {
+    public static function find_with_contains_current_card(Finder_manager $finder_manager) {
         $CI = get_instance();
 
         $parameters = ['id_card'];
@@ -244,7 +247,7 @@ class Deck extends MY_Model
                 MAKE_STR_DB
             );
         } else {
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         }
 
         $this->set_version_when_created($version_when_created);
@@ -263,7 +266,7 @@ class Deck extends MY_Model
 
         if ( ! self::num_is_free($num)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error('INSERT_ERROR', "The deck number is not free.");
+            return new DVB_error('INSERT_ERROR', "The deck number is not free.");
         }
 
         $current_version = Version::retrieve_current_version();
@@ -278,7 +281,7 @@ class Deck extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         }
     }
 
@@ -287,7 +290,7 @@ class Deck extends MY_Model
 
         if (self::deck_is_deleted($id)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error('UPDATE_ERROR', "The deck doesn't exist anymore.");
+            return new DVB_error('UPDATE_ERROR', "The deck doesn't exist anymore.");
         }
 
         $deck = self::find($id);
@@ -297,7 +300,7 @@ class Deck extends MY_Model
         ) {
             if ( ! self::num_is_free($data['num'])) {
                 $CI->transaction->set_as_rollback();
-                return new utils\errors\DVB_error('UPDATE_ERROR', 'The deck number is not free.');
+                return new DVB_error('UPDATE_ERROR', 'The deck number is not free.');
             }
         }
 
@@ -308,7 +311,7 @@ class Deck extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         }
     }
 
@@ -320,10 +323,10 @@ class Deck extends MY_Model
             if ($CI->db->affected_rows() == 1) {
                 return true;
             } else {
-                return new utils\errors\DVB_error('DELETE_ERROR', "The deck doesn't exist anymore.");
+                return new DVB_error('DELETE_ERROR', "The deck doesn't exist anymore.");
             }
         } else {
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         }
     }
     /********************************************************/
@@ -345,7 +348,7 @@ class Deck extends MY_Model
         $CI = get_instance();
 
         if (self::deck_is_deleted($id)) {
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         } else {
             $CI->db->from('card_deck_version')
                    ->where('id_deck', $id)

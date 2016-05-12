@@ -1,7 +1,7 @@
 <?php
 namespace utils\ajax\responses;
 
-class Standard
+class Ajax_response_standard
 {
     public $status;
     public $title = 'Server response';

@@ -1,5 +1,7 @@
 <?php
 
+use utils\errors\DVB_error;
+
 class Card_content extends MY_Model
 {
     private $id;
@@ -161,7 +163,7 @@ class Card_content extends MY_Model
 
             return $this;
         } else {
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         }
     }
     /********************************************************/

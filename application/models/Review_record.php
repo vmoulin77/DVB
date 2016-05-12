@@ -1,5 +1,7 @@
 <?php
 
+use utils\errors\DVB_error;
+
 class Review_record extends MY_Model
 {
     private $is_done;
@@ -108,7 +110,7 @@ class Review_record extends MY_Model
 
         $query = $CI->db->get();
         if ($query->num_rows() == 0) {
-            return new utils\errors\DVB_error('ERROR', "The review record doesn't exist anymore.");
+            return new DVB_error('ERROR', "The review record doesn't exist anymore.");
         }
 
         $row = $query->row();

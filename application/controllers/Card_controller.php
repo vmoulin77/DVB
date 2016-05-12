@@ -1,6 +1,9 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use utils\errors\DVB_error;
+use utils\crud\Finder_manager;
+
 class Card_controller extends CI_Controller
 {
     public function index() {
@@ -46,7 +49,7 @@ class Card_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_error) {
+            } elseif ($result instanceof DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
                 
                 $data = array(
@@ -118,7 +121,7 @@ class Card_controller extends CI_Controller
                         redirect('/Card/edit/' . $campaign->next_id_card . '/' . $id_campaign);
                     }
                 }
-            } elseif ($result instanceof utils\errors\DVB_error) {
+            } elseif ($result instanceof DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -145,7 +148,7 @@ class Card_controller extends CI_Controller
 
         if ($result === true) {
             redirect('/Card/search');
-        } elseif ($result instanceof utils\errors\DVB_error) {
+        } elseif ($result instanceof DVB_error) {
             $this->layout->add_basic_assets()
                          ->menu()
                          ->view('others/form_failure', array('message' => $result->message));
@@ -192,7 +195,7 @@ class Card_controller extends CI_Controller
         }
         $data['card'] = $card;
 
-        $finder_manager = new utils\crud\Finder_manager(
+        $finder_manager = new Finder_manager(
             'Deck',
             'find_with_contains_current_card',
             FIND_MANY,

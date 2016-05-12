@@ -1,6 +1,9 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use utils\errors\DVB_error;
+use utils\crud\Finder_manager;
+
 class Deck_controller extends CI_Controller
 {
     public function index() {
@@ -37,7 +40,7 @@ class Deck_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_error) {
+            } elseif ($result instanceof DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -88,7 +91,7 @@ class Deck_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof utils\errors\DVB_error) {
+            } elseif ($result instanceof DVB_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -111,7 +114,7 @@ class Deck_controller extends CI_Controller
 
         if ($result === true) {
             redirect('/Deck/view_all');
-        } elseif ($result instanceof utils\errors\DVB_error) {
+        } elseif ($result instanceof DVB_error) {
             $this->layout->add_basic_assets()
                          ->menu()
                          ->view('others/form_failure', array('message' => $result->message));
@@ -121,7 +124,7 @@ class Deck_controller extends CI_Controller
     public function view_all() {
         $this->output->enable_profiler(true);
 
-        $finder_manager = new utils\crud\Finder_manager('Deck', 'find_with_version_when_created');
+        $finder_manager = new Finder_manager('Deck', 'find_with_version_when_created');
         $finder_manager->order_by('deck.id', 'asc');
         $decks = $finder_manager->get();
 

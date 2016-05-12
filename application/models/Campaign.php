@@ -1,5 +1,7 @@
 <?php
 
+use utils\errors\DVB_error;
+
 class Campaign extends MY_Model
 {
     private $id;
@@ -116,12 +118,12 @@ class Campaign extends MY_Model
 
         if (Deck::deck_is_deleted($id_deck)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error('INSERT_ERROR', "The deck has been deleted.");
+            return new DVB_error('INSERT_ERROR', "The deck has been deleted.");
         }
 
         if (Deck::deck_is_empty($id_deck)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error('INSERT_ERROR', "The deck is empty.");
+            return new DVB_error('INSERT_ERROR', "The deck is empty.");
         }
 
         $now = new DateTime();
@@ -133,7 +135,7 @@ class Campaign extends MY_Model
 
         if ( ! $CI->db->insert('campaign', $data)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         }
 
         $id_campaign = $CI->db->insert_id();
@@ -158,7 +160,7 @@ class Campaign extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         }
     }
 
@@ -167,7 +169,7 @@ class Campaign extends MY_Model
 
         if (self::campaign_is_deleted($id)) {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error('UPDATE_ERROR', "The campaign doesn't exist anymore.");
+            return new DVB_error('UPDATE_ERROR', "The campaign doesn't exist anymore.");
         }
 
         $CI->db->set($data)
@@ -177,7 +179,7 @@ class Campaign extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         }
     }
 
@@ -189,10 +191,10 @@ class Campaign extends MY_Model
             if ($CI->db->affected_rows() == 1) {
                 return true;
             } else {
-                return new utils\errors\DVB_error('DELETE_ERROR', "The campaign doesn't exist anymore.");
+                return new DVB_error('DELETE_ERROR', "The campaign doesn't exist anymore.");
             }
         } else {
-            return new utils\errors\DVB_error();
+            return new DVB_error();
         }
     }
     /********************************************************/
