@@ -76,16 +76,6 @@ class Deck extends MY_Model
         $this->cards[] = $card;
         return true;
     }
-    public function modify_card($card) {
-        foreach ($this->cards as &$item) {
-            if ($item->id == $card->id) {
-                $item = $card;
-                return true;
-            }
-        }
-
-        return false;
-    }
     public function remove_card($id_card) {
         foreach ($this->cards as $key => $item) {
             if ($item->id == $id_card) {
