@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-use utils\errors\DVB_error;
+use utils\errors\Standard_error;
 
 class Campaign_controller extends CI_Controller
 {
@@ -41,7 +41,7 @@ class Campaign_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof DVB_error) {
+            } elseif ($result instanceof Standard_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -91,7 +91,7 @@ class Campaign_controller extends CI_Controller
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof DVB_error) {
+            } elseif ($result instanceof Standard_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -114,7 +114,7 @@ class Campaign_controller extends CI_Controller
 
         if ($result === true) {
             redirect('/Campaign/view_all');
-        } elseif ($result instanceof DVB_error) {
+        } elseif ($result instanceof Standard_error) {
             $this->layout->add_basic_assets()
                          ->menu()
                          ->view('others/form_failure', array('message' => $result->message));
@@ -122,6 +122,8 @@ class Campaign_controller extends CI_Controller
     }
 
     public function view_all() {
+        $this->output->enable_profiler(true);
+        
         $this->load->model('Campaign');
 
         $campaigns = Campaign::find();

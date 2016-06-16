@@ -1,6 +1,6 @@
 <?php
 
-use utils\errors\DVB_error;
+use utils\errors\Standard_error;
 
 class Review_record extends MY_Model
 {
@@ -11,13 +11,7 @@ class Review_record extends MY_Model
     private $campaign;
     private $card;
     
-    public static function make($is_done, $card_is_modified, $review_date, $make_type = MAKE_STANDARD) {
-        if ($make_type === MAKE_STR_DB) {
-            $is_done = (bool) $is_done;
-            $card_is_modified = (bool) $card_is_modified;
-            $review_date = new DateTime($review_date);
-        }
-
+    public static function make($is_done, $card_is_modified, $review_date) {
         $retour = new self();
 
         $retour->is_done = $is_done;
@@ -103,19 +97,19 @@ class Review_record extends MY_Model
     public static function review_record_is_done($id_campaign, $id_card) {
         $CI = get_instance();
 
-        $CI->db->select('is_done')
+        $CI->db->select('is_done AS campaign_card:is_done')
                ->from('campaign_card')
                ->where('id_campaign', $id_campaign)
                ->where('id_card', $id_card);
 
         $query = $CI->db->get();
         if ($query->num_rows() == 0) {
-            return new DVB_error('ERROR', "The review record doesn't exist anymore.");
+            return new Standard_error('ERROR', "The review record doesn't exist anymore.");
         }
 
         $row = $query->row();
-        $retour = (bool) $row->is_done;
+        cast_row($row);
 
-        return $retour;
+        return $row->{'campaign_card:is_done'};
     }
 }

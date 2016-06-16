@@ -91,11 +91,8 @@ defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest auto
 | My own constants
 |--------------------------------------------------------------------------
 */
-define('STR_DB_BOOL_FALSE',  '0');
-define('STR_DB_BOOL_TRUE',   '1');
+define('STR_DB_BOOL_FALSE',  'f');
+define('STR_DB_BOOL_TRUE',   't');
 
 define('FIND_ONE',   0);
 define('FIND_MANY',  1);
-
-define('MAKE_STANDARD',  0);
-define('MAKE_STR_DB',    1);

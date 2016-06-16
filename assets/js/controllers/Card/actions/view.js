@@ -2,7 +2,7 @@ function manage_card_move(type, id_card, id_deck) {
     start_loader_animation();
 
     $.get(
-        base_url + 'Card_move/ajax_move/' + type + '/' + id_card + '/' + id_deck,
+        BASE_URL + 'Card_move/ajax_move/' + type + '/' + id_card + '/' + id_deck,
         {},
         function(data) {
             var new_presence_in_deck, new_move_for_deck;

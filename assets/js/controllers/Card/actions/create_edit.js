@@ -26,13 +26,13 @@ function visualize() {
 }
 
 function modify_word_status(language) {
-    if ($('#is_active_' + language).val() == '0') {
-        $('#is_active_' + language).val('1');
-        $('#button_word_status_' + language).css('background-color', 'green');
+    if ($('#is_active_' + language).val() == STR_DB_BOOL_FALSE) {
+        $('#is_active_' + language).val(STR_DB_BOOL_TRUE);
+        $('#button_word_status_' + language).attr('class', 'word-status-active');
         $('#button_word_status_' + language).html('active');
     } else {
-        $('#is_active_' + language).val('0');
-        $('#button_word_status_' + language).css('background-color', 'red');
+        $('#is_active_' + language).val(STR_DB_BOOL_FALSE);
+        $('#button_word_status_' + language).attr('class', 'word-status-inactive');
         $('#button_word_status_' + language).html('inactive');
     }
 }

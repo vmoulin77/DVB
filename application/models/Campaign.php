@@ -1,6 +1,6 @@
 <?php
 
-use utils\errors\DVB_error;
+use utils\errors\Standard_error;
 
 class Campaign extends MY_Model
 {
@@ -10,13 +10,7 @@ class Campaign extends MY_Model
 
     private $review_records = array();
     
-    public static function make($id, $name, $created_at, $make_type = MAKE_STANDARD) {
-        if ($make_type === MAKE_STR_DB) {
-            $id = (int) $id;
-            // $name = $name;
-            $created_at = new DateTime($created_at);
-        }
-
+    public static function make($id, $name, $created_at) {
         $retour = new self();
 
         $retour->id          = $id;
@@ -59,7 +53,7 @@ class Campaign extends MY_Model
 
         $finder_manager = init_finder_manager(__CLASS__, __METHOD__, $filter);
 
-        $CI->db->select('id, name, created_at')
+        $CI->db->select('id AS campaign:id, name AS campaign:name, created_at AS campaign:created_at')
                ->from('campaign');
 
         $finder_manager->complete_query();
@@ -69,11 +63,12 @@ class Campaign extends MY_Model
         $retour = array();
 
         foreach ($query->result() as $row) {
+            cast_row($row);
+
             $retour[] = self::make(
-                $row->id,
-                $row->name,
-                $row->created_at,
-                MAKE_STR_DB
+                $row->{'campaign:id'},
+                $row->{'campaign:name'},
+                $row->{'campaign:created_at'}
             );
         }
 
@@ -90,7 +85,7 @@ class Campaign extends MY_Model
     /*                    The withers                       */
     /********************************************************/
     public function with_next_id_card() {
-        $this->db->select('id_card')
+        $this->db->select('id_card AS campaign_card:id_card')
                  ->from('campaign_card')
                  ->where('id_campaign', $this->id)
                  ->where('is_done', false)
@@ -101,7 +96,8 @@ class Campaign extends MY_Model
             $this->next_id_card = null;
         } else {
             $row = $query->row();
-            $this->next_id_card = $row->id_card;
+            cast_row($row);
+            $this->next_id_card = $row->{'campaign_card:id_card'};
         }
 
         return $this;
@@ -118,12 +114,12 @@ class Campaign extends MY_Model
 
         if (Deck::deck_is_deleted($id_deck)) {
             $CI->transaction->set_as_rollback();
-            return new DVB_error('INSERT_ERROR', "The deck has been deleted.");
+            return new Standard_error('INSERT_ERROR', "The deck has been deleted.");
         }
 
         if (Deck::deck_is_empty($id_deck)) {
             $CI->transaction->set_as_rollback();
-            return new DVB_error('INSERT_ERROR', "The deck is empty.");
+            return new Standard_error('INSERT_ERROR', "The deck is empty.");
         }
 
         $now = new DateTime();
@@ -135,7 +131,7 @@ class Campaign extends MY_Model
 
         if ( ! $CI->db->insert('campaign', $data)) {
             $CI->transaction->set_as_rollback();
-            return new DVB_error();
+            return new Standard_error();
         }
 
         $id_campaign = $CI->db->insert_id();
@@ -160,7 +156,7 @@ class Campaign extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new DVB_error();
+            return new Standard_error();
         }
     }
 
@@ -169,7 +165,7 @@ class Campaign extends MY_Model
 
         if (self::campaign_is_deleted($id)) {
             $CI->transaction->set_as_rollback();
-            return new DVB_error('UPDATE_ERROR', "The campaign doesn't exist anymore.");
+            return new Standard_error('UPDATE_ERROR', "The campaign doesn't exist anymore.");
         }
 
         $CI->db->set($data)
@@ -179,7 +175,7 @@ class Campaign extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new DVB_error();
+            return new Standard_error();
         }
     }
 
@@ -191,10 +187,10 @@ class Campaign extends MY_Model
             if ($CI->db->affected_rows() == 1) {
                 return true;
             } else {
-                return new DVB_error('DELETE_ERROR', "The campaign doesn't exist anymore.");
+                return new Standard_error('DELETE_ERROR', "The campaign doesn't exist anymore.");
             }
         } else {
-            return new DVB_error();
+            return new Standard_error();
         }
     }
     /********************************************************/

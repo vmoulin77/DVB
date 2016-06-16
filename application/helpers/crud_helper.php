@@ -18,9 +18,11 @@ if ( ! function_exists('init_finder_manager'))
         }
 
         $finder_manager = new Finder_manager($model, $method);
-        if ($filter !== null) {
+        if (is_numeric($filter)) {
             $finder_manager->set_type(FIND_ONE);
             $finder_manager->where(model_to_table($model) . '.id', $filter);
+        } else {
+            $finder_manager->order_by(model_to_table($model) . '.id', 'ASC');
         }
 
         return $finder_manager;

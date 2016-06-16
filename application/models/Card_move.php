@@ -1,6 +1,6 @@
 <?php
 
-use utils\errors\DVB_error;
+use utils\errors\Standard_error;
 
 class Card_move extends MY_Model
 {
@@ -11,12 +11,7 @@ class Card_move extends MY_Model
     private $deck;
     private $version;
     
-    public static function make($type, $is_last, $make_type = MAKE_STANDARD) {
-        if ($make_type === MAKE_STR_DB) {
-            // $type = $type;
-            $is_last = (bool) $is_last;
-        }
-
+    public static function make($type, $is_last) {
         $retour = new self();
 
         $retour->type = $type;
@@ -122,7 +117,7 @@ class Card_move extends MY_Model
 
         if (Card::card_is_deleted($id_card)) {
             $CI->transaction->set_as_rollback();
-            return new DVB_error('MOVE_ERROR', 'The card has been deleted.');
+            return new Standard_error('MOVE_ERROR', 'The card has been deleted.');
         }
 
         $CI->db->select('type, id_version')
@@ -140,7 +135,7 @@ class Card_move extends MY_Model
             && (($query->num_rows() == 0) || ($row->type == 'remove'))
         ) {
             $CI->transaction->set_as_rollback();
-            return new DVB_error('MOVE_ERROR', 'The card is not in the deck.');
+            return new Standard_error('MOVE_ERROR', 'The card is not in the deck.');
         }
 
         if (($type == 'add')
@@ -148,7 +143,7 @@ class Card_move extends MY_Model
             && ($row->type == 'add')
         ) {
             $CI->transaction->set_as_rollback();
-            return new DVB_error('MOVE_ERROR', 'The card is already in the deck.');
+            return new Standard_error('MOVE_ERROR', 'The card is already in the deck.');
         }
 
         $current_version = Version::retrieve_current_version();
@@ -159,7 +154,7 @@ class Card_move extends MY_Model
             if ($query->num_rows() != 0) {
                 if ( ! self::set_last_move($id_card, $id_deck, false)) {
                     $CI->transaction->set_as_rollback();
-                    return new DVB_error();
+                    return new Standard_error();
                 }
             }
 
@@ -175,7 +170,7 @@ class Card_move extends MY_Model
                 return true;
             } else {
                 $CI->transaction->set_as_rollback();
-                return new DVB_error();
+                return new Standard_error();
             }
         } else {
             $CI->db->where('id_card', $id_card)
@@ -183,14 +178,14 @@ class Card_move extends MY_Model
                    ->where('id_version', $current_version->get_id());
             if ( ! $CI->db->delete('card_deck_version')) {
                 $CI->transaction->set_as_rollback();
-                return new DVB_error();
+                return new Standard_error();
             }
 
             if (self::set_last_move($id_card, $id_deck, true)) {
                 return true;
             } else {
                 $CI->transaction->set_as_rollback();
-                return new DVB_error();
+                return new Standard_error();
             }
         }
     }

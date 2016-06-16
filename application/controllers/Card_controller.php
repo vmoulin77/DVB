@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-use utils\errors\DVB_error;
+use utils\errors\Standard_error;
 use utils\crud\Finder_manager;
 
 class Card_controller extends CI_Controller
@@ -13,7 +13,7 @@ class Card_controller extends CI_Controller
     }
 
     public function create() {
-        //$this->output->enable_profiler(true);
+        $this->output->enable_profiler(true);
 
         $this->load->model('Card');
 
@@ -31,8 +31,8 @@ class Card_controller extends CI_Controller
                 'num'                => $default_num,
                 'word_english'       => '',
                 'word_french'        => '',
-                'is_active_english'  => 1,
-                'is_active_french'   => 1,
+                'is_active_english'  => true,
+                'is_active_french'   => true,
             );
 
             $create_edit = $this->layout->views('controllers/Card/actions/create_edit', $data, array('css', 'js'), true);
@@ -43,13 +43,13 @@ class Card_controller extends CI_Controller
                 (int) $this->input->post('num'),
                 $this->input->post('word_english'),
                 $this->input->post('word_french'),
-                (bool) $this->input->post('is_active_english'),
-                (bool) $this->input->post('is_active_french')
+                $this->input->post('is_active_english'),
+                $this->input->post('is_active_french')
             );
 
             if ($result === true) {
                 $this->layout->view('others/form_success');
-            } elseif ($result instanceof DVB_error) {
+            } elseif ($result instanceof Standard_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
                 
                 $data = array(
@@ -97,8 +97,8 @@ class Card_controller extends CI_Controller
                 'num'                => (int) $this->input->post('num'),
                 'word_english'       => $this->input->post('word_english'),
                 'word_french'        => $this->input->post('word_french'),
-                'is_active_english'  => (bool) $this->input->post('is_active_english'),
-                'is_active_french'   => (bool) $this->input->post('is_active_french'),
+                'is_active_english'  => $this->input->post('is_active_english'),
+                'is_active_french'   => $this->input->post('is_active_french'),
             );
 
             $result = Card::update(
@@ -121,7 +121,7 @@ class Card_controller extends CI_Controller
                         redirect('/Card/edit/' . $campaign->next_id_card . '/' . $id_campaign);
                     }
                 }
-            } elseif ($result instanceof DVB_error) {
+            } elseif ($result instanceof Standard_error) {
                 $this->layout->views('others/form_failure', array('message' => $result->message));
 
                 $data = array(
@@ -148,7 +148,7 @@ class Card_controller extends CI_Controller
 
         if ($result === true) {
             redirect('/Card/search');
-        } elseif ($result instanceof DVB_error) {
+        } elseif ($result instanceof Standard_error) {
             $this->layout->add_basic_assets()
                          ->menu()
                          ->view('others/form_failure', array('message' => $result->message));

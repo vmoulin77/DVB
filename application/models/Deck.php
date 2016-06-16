@@ -1,6 +1,6 @@
 <?php
 
-use utils\errors\DVB_error;
+use utils\errors\Standard_error;
 use utils\crud\Finder_manager;
 
 class Deck extends MY_Model
@@ -13,13 +13,7 @@ class Deck extends MY_Model
     private $cards = array();
     private $card_moves = array();
     
-    public static function make($id, $num, $name, $make_type = MAKE_STANDARD) {
-        if ($make_type === MAKE_STR_DB) {
-            $id = (int) $id;
-            $num = (int) $num;
-            // $name = $name;
-        }
-
+    public static function make($id, $num, $name) {
         $retour = new self();
 
         $retour->id = $id;
@@ -103,8 +97,13 @@ class Deck extends MY_Model
 
         $finder_manager = init_finder_manager(__CLASS__, __METHOD__, $filter);
 
-        $CI->db->select('id, num, name')
-               ->from('deck');
+        $CI->db
+            ->select(
+                'id AS deck:id,'
+                . 'num AS deck:num,'
+                . 'name AS deck:name'
+            )
+            ->from('deck');
 
         $finder_manager->complete_query();
 
@@ -113,11 +112,12 @@ class Deck extends MY_Model
         $retour = array();
 
         foreach ($query->result() as $row) {
+            cast_row($row);
+
             $retour[] = self::make(
-                $row->id,
-                $row->num,
-                $row->name,
-                MAKE_STR_DB
+                $row->{'deck:id'},
+                $row->{'deck:num'},
+                $row->{'deck:name'}
             );
         }
 
@@ -133,9 +133,19 @@ class Deck extends MY_Model
 
         $current_version = Version::retrieve_current_version();
 
-        $CI->db->select('deck.id as deck_id, deck.num, deck.name, version.id as version_id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
-               ->from('deck')
-               ->join('version', 'version.id = deck.id_version_when_created');
+        $CI->db
+            ->select(
+                'deck.id AS deck:id,'
+                . 'deck.num AS deck:num,'
+                . 'deck.name AS deck:name,'
+                . 'version.id AS version:id,'
+                . 'version.database_version AS version:database_version,'
+                . 'version.app_version_code AS version:app_version_code,'
+                . 'version.app_version_name AS version:app_version_name,'
+                . 'version.created_at AS version:created_at'
+            )
+            ->from('deck')
+            ->join('version', 'version.id = deck.id_version_when_created');
 
         $finder_manager->complete_query();
 
@@ -144,24 +154,24 @@ class Deck extends MY_Model
         $retour = array();
 
         foreach ($query->result() as $row) {
-            if ($row->version_id == $current_version->get_id()) {
+            cast_row($row);
+
+            if ($row->{'version:id'} == $current_version->get_id()) {
                 $version_when_created = $current_version;
             } else {
                 $version_when_created = Version::make(
-                    $row->version_id,
-                    $row->database_version,
-                    $row->app_version_code,
-                    $row->app_version_name,
-                    $row->created_at,
-                    MAKE_STR_DB
+                    $row->{'version:id'},
+                    $row->{'version:database_version'},
+                    $row->{'version:app_version_code'},
+                    $row->{'version:app_version_name'},
+                    $row->{'version:created_at'}
                 );
             }
 
             $deck = self::make(
-                $row->deck_id,
-                $row->num,
-                $row->name,
-                MAKE_STR_DB
+                $row->{'deck:id'},
+                $row->{'deck:num'},
+                $row->{'deck:name'}
             );
 
             $deck->set_version_when_created($version_when_created);
@@ -219,25 +229,33 @@ class Deck extends MY_Model
     public function with_version_when_created() {
         $this->load->model('Version');
 
-        $this->db->select('version.id, version.database_version, version.app_version_code, version.app_version_name, version.created_at')
-                 ->from('deck')
-                 ->join('version', 'version.id = deck.id_version_when_created')
-                 ->where('deck.id', $this->id);
+        $this->db
+            ->select(
+                'version.id AS version:id,'
+                . 'version.database_version AS version:database_version,'
+                . 'version.app_version_code AS version:app_version_code,'
+                . 'version.app_version_name AS version:app_version_name,'
+                . 'version.created_at AS version:created_at'
+            )
+            ->from('deck')
+            ->join('version', 'version.id = deck.id_version_when_created')
+            ->where('deck.id', $this->id);
 
         $query = $this->db->get();
-        $row = $query->row();
 
         if ($query->num_rows() == 1) {
+            $row = $query->row();
+            cast_row($row);
+
             $version_when_created = Version::make(
-                $row->id,
-                $row->database_version,
-                $row->app_version_code,
-                $row->app_version_name,
-                $row->created_at,
-                MAKE_STR_DB
+                $row->{'version:id'},
+                $row->{'version:database_version'},
+                $row->{'version:app_version_code'},
+                $row->{'version:app_version_name'},
+                $row->{'version:created_at'}
             );
         } else {
-            return new DVB_error();
+            return new Standard_error();
         }
 
         $this->set_version_when_created($version_when_created);
@@ -256,7 +274,7 @@ class Deck extends MY_Model
 
         if ( ! self::num_is_free($num)) {
             $CI->transaction->set_as_rollback();
-            return new DVB_error('INSERT_ERROR', "The deck number is not free.");
+            return new Standard_error('INSERT_ERROR', "The deck number is not free.");
         }
 
         $current_version = Version::retrieve_current_version();
@@ -271,7 +289,7 @@ class Deck extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new DVB_error();
+            return new Standard_error();
         }
     }
 
@@ -280,7 +298,7 @@ class Deck extends MY_Model
 
         if (self::deck_is_deleted($id)) {
             $CI->transaction->set_as_rollback();
-            return new DVB_error('UPDATE_ERROR', "The deck doesn't exist anymore.");
+            return new Standard_error('UPDATE_ERROR', "The deck doesn't exist anymore.");
         }
 
         $deck = self::find($id);
@@ -290,7 +308,7 @@ class Deck extends MY_Model
         ) {
             if ( ! self::num_is_free($data['num'])) {
                 $CI->transaction->set_as_rollback();
-                return new DVB_error('UPDATE_ERROR', 'The deck number is not free.');
+                return new Standard_error('UPDATE_ERROR', 'The deck number is not free.');
             }
         }
 
@@ -301,7 +319,7 @@ class Deck extends MY_Model
             return true;
         } else {
             $CI->transaction->set_as_rollback();
-            return new DVB_error();
+            return new Standard_error();
         }
     }
 
@@ -313,10 +331,10 @@ class Deck extends MY_Model
             if ($CI->db->affected_rows() == 1) {
                 return true;
             } else {
-                return new DVB_error('DELETE_ERROR', "The deck doesn't exist anymore.");
+                return new Standard_error('DELETE_ERROR', "The deck doesn't exist anymore.");
             }
         } else {
-            return new DVB_error();
+            return new Standard_error();
         }
     }
     /********************************************************/
@@ -338,7 +356,7 @@ class Deck extends MY_Model
         $CI = get_instance();
 
         if (self::deck_is_deleted($id)) {
-            return new DVB_error();
+            return new Standard_error();
         } else {
             $CI->db->from('card_deck_version')
                    ->where('id_deck', $id)

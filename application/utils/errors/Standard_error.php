@@ -1,7 +1,7 @@
 <?php
 namespace utils\errors;
 
-class DVB_error
+class Standard_error
 {
     public $type;
     public $message;

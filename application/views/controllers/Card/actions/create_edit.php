@@ -38,7 +38,7 @@
                 <td>
 <?php
 echo '<button id="button_word_status_english" onclick="modify_word_status(\'english\');return false;" class="';
-if (set_value('is_active_english', $is_active_english)) {
+if ($is_active_english) {
     echo 'word-status-active">active';
 } else {
     echo 'word-status-inactive">inactive';
@@ -49,7 +49,7 @@ echo '</button>';
                 <td>
 <?php
 echo '<button id="button_word_status_french" onclick="modify_word_status(\'french\');return false;" class="';
-if (set_value('is_active_french', $is_active_french)) {
+if ($is_active_french) {
     echo 'word-status-active">active';
 } else {
     echo 'word-status-inactive">inactive';

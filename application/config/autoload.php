@@ -93,6 +93,7 @@ $autoload['drivers'] = array();
 $autoload['helper'] = array(
     'crud',
     'url',
+    'db_cast',
 );
 
 /*
@@ -107,7 +108,10 @@ $autoload['helper'] = array(
 | config files.  Otherwise, leave it blank.
 |
 */
-$autoload['config'] = array();
+$autoload['config'] = array(
+    'config_transaction',
+    'config_db_cast',
+);
 
 /*
 | -------------------------------------------------------------------

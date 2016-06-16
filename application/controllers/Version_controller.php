@@ -58,7 +58,7 @@ class Version_controller extends CI_Controller
                 $comparison = $version_after->compare_to($version_before);
 /*
 echo '<pre>';
-print_r($comparison);
+var_dump($comparison);
 echo '</pre>';
 */
                 $data['comparison'] = $comparison;

@@ -1,5 +1,7 @@
 // Configuration
-var base_url = 'http://www.dvb.fr/';
+var BASE_URL = 'http://www.dvb.fr/';
+var STR_DB_BOOL_FALSE = 'f';
+var STR_DB_BOOL_TRUE = 't';
 //--------------------------------------------------
 
 $(document).ready(function() {
